@@ -26,7 +26,19 @@ tags.yaml                 tag vocabulary (a tag outside it is flagged for review
    GitHub release. A merge reaches nobody until a release is cut, and an installed agent
    is a pinned snapshot.
 
-Contributor guide: [CONTRIBUTING.md](CONTRIBUTING.md).
+## Official and Community
+
+Both are reviewed. **Official** = written by the catalog owner's team; **Community** =
+submitted by anyone else. Each installation decides the badge from its own configuration
+(this catalog as a trusted source **and** the owner's team as an author), never from the
+manifest alone, so a fork that names the owner's team stays Community.
+
+## Contributing
+
+Build the agent in b2ai and export it (agent → **Catalog** tab → **Download**), or write
+it by hand; check it locally with `scripts/verify.sh` (the same verifier image CI runs);
+open a pull request. What gets refused, how review works and how versions are bumped:
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
