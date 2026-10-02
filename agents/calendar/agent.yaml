@@ -1,0 +1,244 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: calendar
+  name: Calendar
+  description: Schedule and reminders specialist — manages the user's Google Calendar, detects conflicts,
+    finds free time.
+  icon: calendar-days
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - scheduling
+spec:
+  model:
+    name: claude-haiku-4-5
+  prompt: prompt.md
+  tools:
+  - curl
+  extensions:
+    required:
+    - calendar
+    optional:
+    - kb
+  capabilities:
+  - id: calendar.list_events
+    description: List upcoming events within a window.
+    inputs:
+      type: object
+      properties:
+        from_iso:
+          type: string
+          format: date-time
+        to_iso:
+          type: string
+          format: date-time
+        max_results:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      required: []
+    outputs:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+      required:
+      - events
+    risk_level: low
+  - id: calendar.search
+    description: Find events by query (title, attendee, location).
+    inputs:
+      type: object
+      properties:
+        query:
+          type: string
+        max_results:
+          type: integer
+          default: 10
+      required:
+      - query
+    outputs:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+      required:
+      - events
+    risk_level: low
+  - id: calendar.find_free_time
+    description: Find available slots in a window.
+    inputs:
+      type: object
+      properties:
+        duration_minutes:
+          type: integer
+          minimum: 5
+          maximum: 480
+        from_iso:
+          type: string
+          format: date-time
+        to_iso:
+          type: string
+          format: date-time
+        working_hours_only:
+          type: boolean
+          default: true
+      required:
+      - duration_minutes
+      - from_iso
+      - to_iso
+    outputs:
+      type: object
+      properties:
+        slots:
+          type: array
+          items:
+            type: object
+            properties:
+              start_iso:
+                type: string
+              end_iso:
+                type: string
+      required:
+      - slots
+    risk_level: none
+  - id: calendar.detect_conflicts
+    description: Check whether a proposed event overlaps with existing events.
+    inputs:
+      type: object
+      properties:
+        start_iso:
+          type: string
+          format: date-time
+        end_iso:
+          type: string
+          format: date-time
+      required:
+      - start_iso
+      - end_iso
+    outputs:
+      type: object
+      properties:
+        has_conflict:
+          type: boolean
+        conflicting_events:
+          type: array
+          items:
+            type: object
+      required:
+      - has_conflict
+    risk_level: none
+  - id: calendar.create_event
+    description: Add an event to the user's calendar.
+    inputs:
+      type: object
+      properties:
+        title:
+          type: string
+        start_iso:
+          type: string
+          format: date-time
+        end_iso:
+          type: string
+          format: date-time
+        location:
+          type: string
+        description:
+          type: string
+        attendees:
+          type: array
+          items:
+            type: string
+        reminder_minutes:
+          type: array
+          items:
+            type: integer
+          default:
+          - 30
+      required:
+      - title
+      - start_iso
+      - end_iso
+    outputs:
+      type: object
+      properties:
+        event_id:
+          type: string
+      required:
+      - event_id
+    risk_level: medium
+  - id: calendar.invite_attendee
+    description: Add an attendee to an existing event (sends email invite).
+    inputs:
+      type: object
+      properties:
+        event_id:
+          type: string
+        attendee_email:
+          type: string
+      required:
+      - event_id
+      - attendee_email
+    outputs:
+      type: object
+      properties:
+        invited:
+          type: boolean
+      required:
+      - invited
+    risk_level: medium
+  - id: calendar.update_event
+    description: Modify an existing event (reschedule, change details).
+    inputs:
+      type: object
+      properties:
+        event_id:
+          type: string
+        title:
+          type: string
+        start_iso:
+          type: string
+          format: date-time
+        end_iso:
+          type: string
+          format: date-time
+        location:
+          type: string
+        description:
+          type: string
+      required:
+      - event_id
+    outputs:
+      type: object
+      properties:
+        updated:
+          type: boolean
+      required:
+      - updated
+    risk_level: medium
+  - id: calendar.delete_event
+    description: Remove an event from the calendar (notifies invitees).
+    inputs:
+      type: object
+      properties:
+        event_id:
+          type: string
+      required:
+      - event_id
+    outputs:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+      required:
+      - deleted
+    risk_level: medium

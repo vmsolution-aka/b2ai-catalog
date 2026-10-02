@@ -1,0 +1,87 @@
+# The catalog verifier, level L1 (vmsolution-aka/b2ai-platform#1201).
+#
+# Security model — this repository is public and takes PRs from strangers:
+# - `pull_request`, NEVER `pull_request_target`: a fork PR gets a read-only token
+#   and no secrets. The verifier needs neither.
+# - GitHub-hosted runners only. The org's self-hosted runners are not available
+#   to public repositories (runner group setting), and nothing here asks for them.
+# - Actions pinned by commit SHA; the verifier image pinned by digest.
+# - The PR's content is only ever READ by the verifier: mounted read-only into a
+#   container with no network, no capabilities and a read-only root filesystem.
+#
+# The job name below is the required status check in branch protection on main.
+name: verifier
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: read  # pull the verifier image
+
+concurrency:
+  group: verifier-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Built from b2ai-platform (catalog/Dockerfile): the platform's own validator
+  # plus its tools catalog and built-in extensions. Bump deliberately, by digest.
+  VERIFIER_IMAGE: ghcr.io/vmsolution-aka/b2ai-catalog-verifier:sha-67229a2@sha256:f9683caeee04525ae6d0105bf734e47f78968feab8cee790c13d445c57975a3b
+
+jobs:
+  l1:
+    name: verifier-l1
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # For a PR this is the merge result (what main would become).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: head
+          persist-credentials: false
+
+      # The base the version-bump rule compares against: the PR's base branch,
+      # or the previous main commit on a push.
+      - id: base
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            echo "sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.base.outputs.sha != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.base.outputs.sha }}
+          path: base
+          persist-credentials: false
+
+      # The verifier image is private until the org allows public packages; the
+      # job token can read it because this repo has Read access to the package.
+      # Remove this step once the image is public.
+      - name: Log in to GHCR (read-only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Pull the verifier image
+        run: docker pull "$VERIFIER_IMAGE"
+
+      - name: L1 static conformance
+        env:
+          HAS_BASE: ${{ steps.base.outputs.sha != '' }}
+        run: |
+          rm -rf head/.git base/.git
+          args=(validate /catalog --github)
+          mounts=(-v "$PWD/head:/catalog:ro")
+          if [ "$HAS_BASE" = "true" ]; then
+            args+=(--base /base)
+            mounts+=(-v "$PWD/base:/base:ro")
+          fi
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --user 1000:1000 \
+            "${mounts[@]}" "$VERIFIER_IMAGE" "${args[@]}"

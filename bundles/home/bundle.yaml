@@ -1,0 +1,55 @@
+apiVersion: b2ai.dev/v1
+kind: Bundle
+metadata:
+  id: home
+  name: Household
+  description: 'Runs a home: the planner drives long projects with the calendar, finance and household
+    agents; inbox, family and health work alongside them.'
+  icon: house
+  version: 1.0.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - household
+  - family
+  - finance
+spec:
+  agents:
+  - id: planner
+    version: 1.1.0
+  - id: inbox
+    version: 1.1.0
+  - id: calendar
+    version: 1.1.0
+  - id: finance
+    version: 1.1.0
+  - id: household
+    version: 1.1.0
+  - id: family
+    version: 1.1.0
+  - id: health
+    version: 1.1.0
+  relations:
+  - from: planner
+    to: calendar
+    kind: normal
+  - from: planner
+    to: finance
+    kind: normal
+  - from: planner
+    to: household
+    kind: normal
+  - from: inbox
+    to: finance
+    kind: peer
+  - from: inbox
+    to: calendar
+    kind: peer
+  - from: family
+    to: calendar
+    kind: peer
+  - from: health
+    to: calendar
+    kind: peer

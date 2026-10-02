@@ -1,0 +1,101 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: architect
+  name: Architect
+  description: Software architect — drafts ADRs, designs systems, surfaces trade-offs. Does not write
+    production code.
+  icon: landmark
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - architecture
+spec:
+  model:
+    name: claude-opus-5-5
+    effort: high
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - curl
+  - python
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: architect.draft_adr
+    description: Draft an ADR document for a design decision.
+    inputs:
+      type: object
+      properties:
+        topic:
+          type: string
+        context:
+          type: string
+        alternatives:
+          type: array
+          items:
+            type: string
+      required:
+      - topic
+    outputs:
+      type: object
+      properties:
+        adr_path:
+          type: string
+        summary:
+          type: string
+      required:
+      - adr_path
+    risk_level: none
+  - id: architect.review_design
+    description: Review someone else's design proposal — call out gaps, risks, missed alternatives.
+    inputs:
+      type: object
+      properties:
+        design_doc_url:
+          type: string
+      required:
+      - design_doc_url
+    outputs:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum:
+          - approve
+          - request_changes
+          - comment
+        review:
+          type: string
+      required:
+      - verdict
+    risk_level: none
+  - id: architect.trade_off_analysis
+    description: Compare 2-3 approaches to a problem — pros/cons table + recommendation.
+    inputs:
+      type: object
+      properties:
+        problem:
+          type: string
+        approaches:
+          type: array
+          items:
+            type: string
+      required:
+      - problem
+      - approaches
+    outputs:
+      type: object
+      properties:
+        recommendation:
+          type: string
+        reasoning:
+          type: string
+      required:
+      - recommendation
+    risk_level: none

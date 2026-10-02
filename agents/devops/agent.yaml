@@ -1,0 +1,126 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: devops
+  name: DevOps
+  description: DevOps — CI/CD pipelines, Helm upgrades, GitOps image bumps and Argo CD syncs for the organisation's
+    own deployment setup.
+  icon: workflow
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - ci-cd
+  - operations
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - kubectl
+  - helm
+  - argocd
+  - curl
+  - python
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: devops.run_ci
+    description: Trigger or inspect a GitHub Actions workflow run.
+    inputs:
+      type: object
+      properties:
+        workflow:
+          type: string
+        ref:
+          type: string
+          default: main
+      required:
+      - workflow
+    outputs:
+      type: object
+      properties:
+        run_id:
+          type: string
+        status:
+          type: string
+      required:
+      - run_id
+    risk_level: low
+  - id: devops.helm_upgrade
+    description: Upgrade a Helm release on a cluster the agent has access to.
+    inputs:
+      type: object
+      properties:
+        release:
+          type: string
+        chart_version:
+          type: string
+        values_file:
+          type: string
+      required:
+      - release
+    outputs:
+      type: object
+      properties:
+        status:
+          type: string
+        revision:
+          type: integer
+      required:
+      - status
+    risk_level: high
+  - id: devops.argo_sync
+    description: Trigger an Argo CD application sync and watch the rollout.
+    inputs:
+      type: object
+      properties:
+        app:
+          type: string
+        prune:
+          type: boolean
+          default: false
+      required:
+      - app
+    outputs:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+      - status
+    risk_level: high
+  - id: devops.bump_image
+    description: Bump an image tag in the organisation's GitOps / deployment repository, then commit and
+      push.
+    inputs:
+      type: object
+      properties:
+        repository:
+          type: string
+          description: GitOps / deployment repository (owner/name or clone URL).
+        file:
+          type: string
+          description: Values or manifest file holding the tag, relative to the repository root.
+        component:
+          type: string
+          description: Component whose image tag changes.
+        new_tag:
+          type: string
+      required:
+      - component
+      - new_tag
+    outputs:
+      type: object
+      properties:
+        commit_sha:
+          type: string
+      required:
+      - commit_sha
+    risk_level: medium

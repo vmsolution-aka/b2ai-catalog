@@ -1,0 +1,105 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: product-manager
+  name: Product Manager
+  description: Product manager — feature triage, backlog priorities, user stories and roadmap; sets priorities
+    for the tech lead.
+  icon: clipboard-list
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - product
+  - management
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - curl
+  extensions:
+    optional:
+    - kb
+  is_manager: true
+  capabilities:
+  - id: product-manager.triage_request
+    description: Triage an incoming feature/bug request — categorize, prioritize, assign to the right
+      team lead.
+    inputs:
+      type: object
+      properties:
+        request:
+          type: string
+        urgency:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+      required:
+      - request
+    outputs:
+      type: object
+      properties:
+        category:
+          type: string
+        priority:
+          type: string
+        assigned_to:
+          type: string
+      required:
+      - category
+      - assigned_to
+    risk_level: none
+  - id: product-manager.update_backlog
+    description: Add/move/close an issue in the team's backlog (GitHub issues by default).
+    inputs:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+          - create
+          - update_priority
+          - close
+        issue_number:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+      required:
+      - action
+    outputs:
+      type: object
+      properties:
+        issue_url:
+          type: string
+      required:
+      - issue_url
+    risk_level: low
+  - id: product-manager.write_user_story
+    description: Author a user story (As-a/I-want/So-that + acceptance criteria) for a feature.
+    inputs:
+      type: object
+      properties:
+        feature:
+          type: string
+      required:
+      - feature
+    outputs:
+      type: object
+      properties:
+        story_markdown:
+          type: string
+      required:
+      - story_markdown
+    risk_level: none

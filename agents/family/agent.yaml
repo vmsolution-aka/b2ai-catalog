@@ -1,0 +1,220 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: family
+  name: Family
+  description: Kids and family logistics — school, activities, milestones, permission slips.
+  icon: users
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - family
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - curl
+  extensions:
+    required:
+    - gmail
+    optional:
+    - kb
+  capabilities:
+  - id: kids.list
+    description: Roster of children in the household.
+    inputs:
+      type: object
+      properties: {}
+      required: []
+    outputs:
+      type: object
+      properties:
+        kids:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              age:
+                type: integer
+      required:
+      - kids
+    risk_level: none
+  - id: kids.list_schedule
+    description: Per-kid schedule (school + activities) for a window.
+    inputs:
+      type: object
+      properties:
+        kid_name:
+          type: string
+        days_ahead:
+          type: integer
+          default: 7
+      required:
+      - kid_name
+    outputs:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+      required:
+      - events
+    risk_level: low
+  - id: kids.log_activity
+    description: Record completion of an activity (homework, lesson, sport).
+    inputs:
+      type: object
+      properties:
+        kid_name:
+          type: string
+        activity:
+          type: string
+        completed_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
+      required:
+      - kid_name
+      - activity
+    outputs:
+      type: object
+      properties:
+        log_id:
+          type: string
+      required:
+      - log_id
+    risk_level: low
+  - id: kids.log_milestone
+    description: Record a developmental milestone.
+    inputs:
+      type: object
+      properties:
+        kid_name:
+          type: string
+        milestone:
+          type: string
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+      required:
+      - kid_name
+      - milestone
+      - date
+    outputs:
+      type: object
+      properties:
+        milestone_id:
+          type: string
+      required:
+      - milestone_id
+    risk_level: low
+  - id: kids.school_read_messages
+    description: Read recent school communications (via Gmail).
+    inputs:
+      type: object
+      properties:
+        kid_name:
+          type: string
+        days_back:
+          type: integer
+          default: 14
+      required: []
+    outputs:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            type: object
+      required:
+      - messages
+    risk_level: low
+  - id: kids.school_send_message
+    description: Send a message to the school (via Inbox dispatch).
+    inputs:
+      type: object
+      properties:
+        kid_name:
+          type: string
+        recipient:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+      required:
+      - recipient
+      - subject
+      - body
+    outputs:
+      type: object
+      properties:
+        message_id:
+          type: string
+      required:
+      - message_id
+    risk_level: medium
+  - id: kids.permission_slip_sign
+    description: Digitally sign and return a permission slip (HIGH — legally consequential).
+    inputs:
+      type: object
+      properties:
+        kid_name:
+          type: string
+        activity_description:
+          type: string
+        signature_full_name:
+          type: string
+        date:
+          type: string
+          format: date
+      required:
+      - kid_name
+      - activity_description
+      - signature_full_name
+    outputs:
+      type: object
+      properties:
+        signed:
+          type: boolean
+      required:
+      - signed
+    risk_level: high
+    requires_user_approval: true
+  - id: kids.share_data_external
+    description: Share kid-related data with an external party (HIGH — privacy).
+    inputs:
+      type: object
+      properties:
+        kid_name:
+          type: string
+        recipient_email:
+          type: string
+        data_description:
+          type: string
+        consent_confirmed:
+          type: boolean
+      required:
+      - kid_name
+      - recipient_email
+      - consent_confirmed
+    outputs:
+      type: object
+      properties:
+        shared:
+          type: boolean
+      required:
+      - shared
+    risk_level: high
+    requires_user_approval: true

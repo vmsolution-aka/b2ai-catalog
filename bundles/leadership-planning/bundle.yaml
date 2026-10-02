@@ -1,0 +1,35 @@
+apiVersion: b2ai.dev/v1
+kind: Bundle
+metadata:
+  id: leadership-planning
+  name: Leadership and planning
+  description: 'Turns leadership goals into work: the COO breaks initiatives into packages for the product
+    manager and asks the architect for technical direction.'
+  icon: building-2
+  version: 1.0.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - management
+  - planning
+  - product
+spec:
+  agents:
+  - id: coo
+    version: 1.1.0
+  - id: product-manager
+    version: 1.1.0
+  - id: architect
+    version: 1.1.0
+  relations:
+  - from: coo
+    to: product-manager
+    kind: normal
+  - from: coo
+    to: architect
+    kind: normal
+  - from: product-manager
+    to: architect
+    kind: peer
+  router: coo

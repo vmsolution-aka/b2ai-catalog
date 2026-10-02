@@ -1,0 +1,250 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: health
+  name: Health
+  description: Health and wellness specialist — appointments, medications, symptoms, fitness. Educates
+    but does not diagnose.
+  icon: heart-pulse
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - health
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - curl
+  extensions:
+    required:
+    - calendar
+    optional:
+    - kb
+  capabilities:
+  - id: health.list_appointments
+    description: Upcoming medical appointments stored in KB / calendar.
+    inputs:
+      type: object
+      properties:
+        days_ahead:
+          type: integer
+          default: 60
+        for_person:
+          type: string
+          description: Optional person identifier
+      required: []
+    outputs:
+      type: object
+      properties:
+        appointments:
+          type: array
+          items:
+            type: object
+      required:
+      - appointments
+    risk_level: low
+  - id: health.log_symptom
+    description: Record a symptom observation in the KB.
+    inputs:
+      type: object
+      properties:
+        symptom:
+          type: string
+        severity:
+          type: string
+          enum:
+          - mild
+          - moderate
+          - severe
+        for_person:
+          type: string
+        notes:
+          type: string
+      required:
+      - symptom
+      - severity
+    outputs:
+      type: object
+      properties:
+        log_id:
+          type: string
+      required:
+      - log_id
+    risk_level: low
+  - id: health.list_medications
+    description: Current medications with schedules per person.
+    inputs:
+      type: object
+      properties:
+        for_person:
+          type: string
+      required: []
+    outputs:
+      type: object
+      properties:
+        medications:
+          type: array
+          items:
+            type: object
+      required:
+      - medications
+    risk_level: low
+  - id: health.add_medication
+    description: Add a new medication entry to the KB.
+    inputs:
+      type: object
+      properties:
+        name:
+          type: string
+        dose:
+          type: string
+        schedule:
+          type: string
+          description: e.g., 'twice daily', 'morning', '8h interval'
+        for_person:
+          type: string
+        prescribed_by:
+          type: string
+        until_date:
+          type: string
+          format: date
+      required:
+      - name
+      - dose
+      - schedule
+    outputs:
+      type: object
+      properties:
+        med_id:
+          type: string
+      required:
+      - med_id
+    risk_level: low
+  - id: health.med_reminder_schedule
+    description: Create recurring calendar reminders for a medication.
+    inputs:
+      type: object
+      properties:
+        med_id:
+          type: string
+        times_of_day:
+          type: array
+          items:
+            type: string
+            description: HH:MM
+      required:
+      - med_id
+      - times_of_day
+    outputs:
+      type: object
+      properties:
+        event_ids:
+          type: array
+          items:
+            type: string
+      required:
+      - event_ids
+    risk_level: low
+  - id: health.book_appointment
+    description: Schedule a doctor visit (creates calendar event + KB entry).
+    inputs:
+      type: object
+      properties:
+        provider:
+          type: string
+        specialty:
+          type: string
+        when_iso:
+          type: string
+          format: date-time
+        location:
+          type: string
+        for_person:
+          type: string
+        reason:
+          type: string
+      required:
+      - provider
+      - when_iso
+      - for_person
+    outputs:
+      type: object
+      properties:
+        appointment_id:
+          type: string
+      required:
+      - appointment_id
+    risk_level: medium
+  - id: health.cancel_appointment
+    description: Cancel an existing appointment + notify provider via inbox.
+    inputs:
+      type: object
+      properties:
+        appointment_id:
+          type: string
+        reason:
+          type: string
+      required:
+      - appointment_id
+    outputs:
+      type: object
+      properties:
+        cancelled:
+          type: boolean
+      required:
+      - cancelled
+    risk_level: medium
+  - id: health.fitness_summary
+    description: Aggregate fitness data from manual logs in KB.
+    inputs:
+      type: object
+      properties:
+        period_days:
+          type: integer
+          default: 30
+        for_person:
+          type: string
+      required: []
+    outputs:
+      type: object
+      properties:
+        sessions:
+          type: integer
+        total_minutes:
+          type: integer
+        avg_intensity:
+          type: string
+      required:
+      - sessions
+    risk_level: none
+  - id: health.share_records_external
+    description: Send health records to an external party (HIGH risk — privacy).
+    inputs:
+      type: object
+      properties:
+        recipient_email:
+          type: string
+        record_ids:
+          type: array
+          items:
+            type: string
+        consent_confirmed:
+          type: boolean
+      required:
+      - recipient_email
+      - record_ids
+      - consent_confirmed
+    outputs:
+      type: object
+      properties:
+        shared:
+          type: boolean
+      required:
+      - shared
+    risk_level: high
+    requires_user_approval: true

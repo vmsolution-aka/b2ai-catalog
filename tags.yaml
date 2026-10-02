@@ -1,0 +1,48 @@
+# Tag vocabulary (ADR-154 decision 10). A tag outside this list is a verifier warning.
+tags:
+- tag: architecture
+  description: System design, ADRs and technical trade-offs.
+- tag: ci-cd
+  description: Build, test and deployment pipelines.
+- tag: design
+  description: UX and UI design, mockups and design review.
+- tag: email
+  description: Reading, triaging and writing email.
+- tag: engineering
+  description: 'Building and running software: the work of a software delivery team.'
+- tag: family
+  description: Children, school and family logistics.
+- tag: finance
+  description: 'Money: bills, budgets, expenses and payments.'
+- tag: food
+  description: Meals, recipes and shopping lists.
+- tag: health
+  description: Appointments, medication and wellbeing.
+- tag: household
+  description: 'Running a home: supplies, repairs and vendors.'
+- tag: infrastructure
+  description: Hosts, networks, storage and clusters.
+- tag: management
+  description: 'Coordinates other agents: breaks down work and aggregates reports.'
+- tag: operations
+  description: 'Keeping systems available: incidents, health checks and deploys.'
+- tag: personal
+  description: A person's own life and household rather than a company's work.
+- tag: planning
+  description: Long-horizon plans broken into milestones.
+- tag: product
+  description: Backlog, user stories and roadmap.
+- tag: releases
+  description: Versioning, release notes and tags.
+- tag: research
+  description: Finding, comparing and fact-checking information.
+- tag: scheduling
+  description: Calendars, free time and reminders.
+- tag: security
+  description: Security review, secrets and vulnerability triage.
+- tag: software-development
+  description: Writing, fixing and reviewing code.
+- tag: testing
+  description: Test plans and test runs before merge.
+- tag: travel
+  description: Trips, bookings and itineraries.

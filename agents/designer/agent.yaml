@@ -1,0 +1,77 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: designer
+  name: Designer
+  description: UX/UI designer — mockups, component and layout design, UI and accessibility review for
+    the product the team builds.
+  icon: palette
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - design
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - curl
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: designer.draft_mockup
+    description: Draft a textual or ASCII mockup of a UI component or layout.
+    inputs:
+      type: object
+      properties:
+        component:
+          type: string
+        context:
+          type: string
+      required:
+      - component
+    outputs:
+      type: object
+      properties:
+        mockup:
+          type: string
+        notes:
+          type: string
+      required:
+      - mockup
+    risk_level: none
+  - id: designer.review_ui
+    description: Review an existing UI piece (PR or live page) — usability gaps, accessibility, consistency
+      with the rest of the product.
+    inputs:
+      type: object
+      properties:
+        target:
+          type: string
+          description: PR number, file path, or live URL
+      required:
+      - target
+    outputs:
+      type: object
+      properties:
+        findings:
+          type: array
+          items:
+            type: string
+        verdict:
+          type: string
+          enum:
+          - approve
+          - request_changes
+          - comment
+      required:
+      - findings
+      - verdict
+    risk_level: none

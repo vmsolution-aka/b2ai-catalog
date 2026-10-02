@@ -1,0 +1,27 @@
+# Catalog content must be generic (vmsolution-aka/b2ai-platform#1193): fails on
+# terms that name the platform owner's own organisation or infrastructure.
+# Temporary — to move into the verifier's L1 rules in b2ai-platform; then this
+# workflow is removed. Same security model as verifier.yml: pull_request only,
+# read-only token, SHA-pinned checkout, no secrets.
+name: owner-terms
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  owner-terms:
+    name: owner-terms
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: No owner-specific terms in catalog content
+        run: scripts/check-owner-terms.sh

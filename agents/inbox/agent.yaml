@@ -1,0 +1,243 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: inbox
+  name: Inbox
+  description: Email triage and drafting specialist — reads, classifies, replies, sends, archives the
+    user's Gmail.
+  icon: inbox
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - email
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - curl
+  extensions:
+    required:
+    - gmail
+    optional:
+    - kb
+  capabilities:
+  - id: gmail.list
+    description: List recent emails (read-only).
+    inputs:
+      type: object
+      properties:
+        max_results:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        label:
+          type: string
+          description: Optional Gmail label filter
+      required: []
+    outputs:
+      type: object
+      properties:
+        emails:
+          type: array
+          items:
+            type: object
+      required:
+      - emails
+    risk_level: low
+  - id: gmail.search
+    description: Search emails by Gmail query syntax.
+    inputs:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Gmail search query, e.g., 'from:school subject:permission'
+        max_results:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+      required:
+      - query
+    outputs:
+      type: object
+      properties:
+        emails:
+          type: array
+          items:
+            type: object
+      required:
+      - emails
+    risk_level: low
+  - id: gmail.read
+    description: Read the full body of a specific email.
+    inputs:
+      type: object
+      properties:
+        message_id:
+          type: string
+      required:
+      - message_id
+    outputs:
+      type: object
+      properties:
+        subject:
+          type: string
+        from:
+          type: string
+        body:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+      required:
+      - subject
+      - body
+    risk_level: low
+  - id: gmail.classify
+    description: Classify importance and category of an email (no side effect).
+    inputs:
+      type: object
+      properties:
+        message_id:
+          type: string
+      required:
+      - message_id
+    outputs:
+      type: object
+      properties:
+        importance:
+          type: string
+          enum:
+          - urgent
+          - normal
+          - low
+          - junk
+        category:
+          type: string
+        action_suggested:
+          type: string
+      required:
+      - importance
+      - category
+    risk_level: none
+  - id: gmail.draft
+    description: Create a draft reply (stored in Gmail Drafts, not sent).
+    inputs:
+      type: object
+      properties:
+        thread_id:
+          type: string
+        body:
+          type: string
+        subject:
+          type: string
+      required:
+      - body
+    outputs:
+      type: object
+      properties:
+        draft_id:
+          type: string
+      required:
+      - draft_id
+    risk_level: low
+  - id: gmail.send
+    description: Send an email (irreversible). Requires user approval.
+    inputs:
+      type: object
+      properties:
+        to:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        cc:
+          type: string
+        thread_id:
+          type: string
+          description: Optional reply-to thread
+      required:
+      - to
+      - subject
+      - body
+    outputs:
+      type: object
+      properties:
+        message_id:
+          type: string
+        sent_at:
+          type: integer
+      required:
+      - message_id
+    risk_level: high
+    requires_user_approval: true
+  - id: gmail.archive
+    description: Move a thread out of inbox (recoverable from All Mail).
+    inputs:
+      type: object
+      properties:
+        thread_id:
+          type: string
+      required:
+      - thread_id
+    outputs:
+      type: object
+      properties:
+        archived:
+          type: boolean
+      required:
+      - archived
+    risk_level: medium
+  - id: gmail.delete
+    description: Move a thread to Trash (auto-purged after 30 days).
+    inputs:
+      type: object
+      properties:
+        thread_id:
+          type: string
+      required:
+      - thread_id
+    outputs:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+      required:
+      - deleted
+    risk_level: medium
+  - id: gmail.label
+    description: Add or remove labels on a thread.
+    inputs:
+      type: object
+      properties:
+        thread_id:
+          type: string
+        add_labels:
+          type: array
+          items:
+            type: string
+        remove_labels:
+          type: array
+          items:
+            type: string
+      required:
+      - thread_id
+    outputs:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+      required:
+      - labels
+    risk_level: low

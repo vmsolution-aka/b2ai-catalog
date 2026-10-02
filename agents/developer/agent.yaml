@@ -1,0 +1,129 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: developer
+  name: Developer
+  description: Software developer — implements features, fixes bugs, writes tests, opens and reviews pull
+    requests in the repository the team works on.
+  icon: code
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - software-development
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: high
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - kubectl
+  - helm
+  - curl
+  - node
+  - npm
+  - python
+  - uv
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: developer.implement_feature
+    description: Implement a feature from a task spec — branch + code + tests + PR.
+    inputs:
+      type: object
+      properties:
+        task_spec:
+          type: string
+        branch_name:
+          type: string
+        target_repo:
+          type: string
+          description: Repository to work in (owner/name or clone URL). When omitted, the repository the
+            requester or the team's context names; ask if none is known.
+      required:
+      - task_spec
+    outputs:
+      type: object
+      properties:
+        pr_url:
+          type: string
+        status:
+          type: string
+          enum:
+          - opened
+          - blocked
+      required:
+      - pr_url
+      - status
+    risk_level: medium
+  - id: developer.fix_bug
+    description: Investigate a bug report, locate root cause, patch + test + PR.
+    inputs:
+      type: object
+      properties:
+        bug_description:
+          type: string
+        reproduction_steps:
+          type: string
+      required:
+      - bug_description
+    outputs:
+      type: object
+      properties:
+        pr_url:
+          type: string
+        root_cause:
+          type: string
+      required:
+      - pr_url
+    risk_level: medium
+  - id: developer.review_pr
+    description: Review a GitHub PR — comment line-by-line + summary verdict.
+    inputs:
+      type: object
+      properties:
+        pr_number:
+          type: integer
+        focus_areas:
+          type: array
+          items:
+            type: string
+      required:
+      - pr_number
+    outputs:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum:
+          - approve
+          - request_changes
+          - comment
+        comments_posted:
+          type: integer
+    risk_level: low
+  - id: developer.write_tests
+    description: Add unit/integration tests for an existing module.
+    inputs:
+      type: object
+      properties:
+        module_path:
+          type: string
+        coverage_target:
+          type: string
+          default: happy path + 2-3 edge cases
+      required:
+      - module_path
+    outputs:
+      type: object
+      properties:
+        test_file_path:
+          type: string
+        tests_added:
+          type: integer
+    risk_level: low

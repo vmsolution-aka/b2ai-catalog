@@ -1,0 +1,44 @@
+apiVersion: b2ai.dev/v1
+kind: Bundle
+metadata:
+  id: platform-operations
+  name: Platform operations
+  description: 'Keeps the organisation''s systems available: the operations manager coordinates DevOps,
+    security and the release manager through deploys, incidents and releases.'
+  icon: cloud
+  version: 1.0.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - operations
+  - infrastructure
+  - ci-cd
+  - security
+spec:
+  agents:
+  - id: infra
+    version: 1.1.0
+  - id: devops
+    version: 1.1.0
+  - id: security
+    version: 1.1.0
+  - id: release-manager
+    version: 1.1.0
+  relations:
+  - from: infra
+    to: devops
+    kind: normal
+  - from: infra
+    to: security
+    kind: normal
+  - from: infra
+    to: release-manager
+    kind: normal
+  - from: release-manager
+    to: devops
+    kind: normal
+  - from: release-manager
+    to: security
+    kind: normal
+  router: infra

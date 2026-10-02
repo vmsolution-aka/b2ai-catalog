@@ -1,0 +1,257 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: finance
+  name: Finance
+  description: Personal finance specialist — bills, budget, expenses, payments, investments. Read-only
+    by default; payments require approval.
+  icon: wallet
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - finance
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - curl
+  - python
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: finance.read_transactions
+    description: List transactions from logged statements stored in KB.
+    inputs:
+      type: object
+      properties:
+        from_date:
+          type: string
+          format: date
+        to_date:
+          type: string
+          format: date
+        category:
+          type: string
+        max_results:
+          type: integer
+          default: 50
+      required: []
+    outputs:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            type: object
+      required:
+      - transactions
+    risk_level: low
+  - id: finance.budget_status
+    description: Current spend vs planned for a period.
+    inputs:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - month
+          - quarter
+          - year
+          default: month
+      required: []
+    outputs:
+      type: object
+      properties:
+        actual:
+          type: number
+        planned:
+          type: number
+        variance:
+          type: number
+        by_category:
+          type: object
+      required:
+      - actual
+      - planned
+      - variance
+    risk_level: none
+  - id: finance.categorize
+    description: Classify a single transaction (groceries, utilities, entertainment, ...).
+    inputs:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+        suggested_category:
+          type: string
+      required:
+      - transaction_id
+    outputs:
+      type: object
+      properties:
+        category:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+      required:
+      - category
+    risk_level: low
+  - id: finance.list_bills
+    description: Upcoming bills due in a window.
+    inputs:
+      type: object
+      properties:
+        days_ahead:
+          type: integer
+          minimum: 1
+          maximum: 365
+          default: 30
+      required: []
+    outputs:
+      type: object
+      properties:
+        bills:
+          type: array
+          items:
+            type: object
+      required:
+      - bills
+    risk_level: low
+  - id: finance.log_expense
+    description: Record an expense manually (no payment, just bookkeeping).
+    inputs:
+      type: object
+      properties:
+        amount:
+          type: number
+          minimum: 0
+        currency:
+          type: string
+          description: ISO 4217 currency code; when omitted, the user's own currency from context.
+        category:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+      required:
+      - amount
+      - category
+    outputs:
+      type: object
+      properties:
+        expense_id:
+          type: string
+      required:
+      - expense_id
+    risk_level: low
+  - id: finance.pay_bill
+    description: Execute a bill payment (irreversible). Requires user approval.
+    inputs:
+      type: object
+      properties:
+        bill_id:
+          type: string
+        amount:
+          type: number
+          minimum: 0
+        recipient:
+          type: string
+        title:
+          type: string
+      required:
+      - amount
+      - recipient
+      - title
+    outputs:
+      type: object
+      properties:
+        tx_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - submitted
+          - failed
+      required:
+      - tx_id
+      - status
+    risk_level: high
+    requires_user_approval: true
+  - id: finance.transfer_funds
+    description: Transfer funds between user's own accounts (irreversible). Requires user approval.
+    inputs:
+      type: object
+      properties:
+        from_account:
+          type: string
+        to_account:
+          type: string
+        amount:
+          type: number
+          minimum: 0
+        currency:
+          type: string
+          description: ISO 4217 currency code; when omitted, the user's own currency from context.
+      required:
+      - from_account
+      - to_account
+      - amount
+    outputs:
+      type: object
+      properties:
+        tx_id:
+          type: string
+      required:
+      - tx_id
+    risk_level: high
+    requires_user_approval: true
+  - id: finance.investment_summary
+    description: Portfolio overview (manual entries in KB).
+    inputs:
+      type: object
+      properties:
+        include_history:
+          type: boolean
+          default: false
+      required: []
+    outputs:
+      type: object
+      properties:
+        positions:
+          type: array
+          items:
+            type: object
+        total_value:
+          type: number
+      required:
+      - positions
+    risk_level: none
+  - id: finance.tax_estimate
+    description: Rough tax projection from logged expenses + income.
+    inputs:
+      type: object
+      properties:
+        year:
+          type: integer
+      required:
+      - year
+    outputs:
+      type: object
+      properties:
+        estimated_tax:
+          type: number
+        notes:
+          type: string
+      required:
+      - estimated_tax
+    risk_level: low

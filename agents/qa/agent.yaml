@@ -1,0 +1,115 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: qa
+  name: QA
+  description: QA — runs unit, end-to-end and smoke tests, writes test plans, verifies pull requests before
+    merge.
+  icon: flask-conical
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - testing
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - curl
+  - python
+  - node
+  - npm
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: qa.run_e2e
+    description: Run the project's end-to-end suite against a branch or PR.
+    inputs:
+      type: object
+      properties:
+        target:
+          type: string
+          description: branch name or PR number
+        scenario:
+          type: string
+          default: smoke
+      required:
+      - target
+    outputs:
+      type: object
+      properties:
+        result:
+          type: string
+          enum:
+          - pass
+          - fail
+          - error
+        log_url:
+          type: string
+      required:
+      - result
+    risk_level: low
+  - id: qa.run_unit_tests
+    description: Run the unit tests (e.g. pytest, vitest) for a target module.
+    inputs:
+      type: object
+      properties:
+        module:
+          type: string
+      required:
+      - module
+    outputs:
+      type: object
+      properties:
+        passed:
+          type: integer
+        failed:
+          type: integer
+      required:
+      - passed
+      - failed
+    risk_level: low
+  - id: qa.smoke_check
+    description: Quick smoke check after a deploy — health endpoints, login, the critical user journeys.
+    inputs:
+      type: object
+      properties:
+        environment:
+          type: string
+          description: Environment to check, e.g. staging or production.
+      required:
+      - environment
+    outputs:
+      type: object
+      properties:
+        checks:
+          type: array
+          items:
+            type: object
+      required:
+      - checks
+    risk_level: low
+  - id: qa.write_test_plan
+    description: Author a test plan for a new feature — happy path, edge cases, regression risks.
+    inputs:
+      type: object
+      properties:
+        feature:
+          type: string
+      required:
+      - feature
+    outputs:
+      type: object
+      properties:
+        plan_markdown:
+          type: string
+      required:
+      - plan_markdown
+    risk_level: none

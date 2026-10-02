@@ -1,0 +1,99 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: release-manager
+  name: Release Manager
+  description: Release manager — release notes, changelog, version bumps and tags; coordinates release
+    timing with DevOps and security.
+  icon: rocket
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - releases
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - argocd
+  - curl
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: release-manager.draft_notes
+    description: Draft release notes for a version cut — summarize merged PRs into user-facing changelog
+      entries.
+    inputs:
+      type: object
+      properties:
+        version:
+          type: string
+        since_tag:
+          type: string
+      required:
+      - version
+      - since_tag
+    outputs:
+      type: object
+      properties:
+        notes_markdown:
+          type: string
+      required:
+      - notes_markdown
+    risk_level: low
+  - id: release-manager.create_tag
+    description: Create + push a git tag for a release.
+    inputs:
+      type: object
+      properties:
+        repo:
+          type: string
+        tag:
+          type: string
+        message:
+          type: string
+      required:
+      - repo
+      - tag
+    outputs:
+      type: object
+      properties:
+        tag_url:
+          type: string
+      required:
+      - tag_url
+    risk_level: medium
+  - id: release-manager.bump_version
+    description: Bump the semantic version in the project's manifest files (e.g. pyproject.toml, package.json)
+      and commit.
+    inputs:
+      type: object
+      properties:
+        component:
+          type: string
+        bump_kind:
+          type: string
+          enum:
+          - major
+          - minor
+          - patch
+      required:
+      - component
+      - bump_kind
+    outputs:
+      type: object
+      properties:
+        new_version:
+          type: string
+        commit_sha:
+          type: string
+      required:
+      - new_version
+    risk_level: medium

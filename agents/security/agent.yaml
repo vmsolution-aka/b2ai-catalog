@@ -1,0 +1,96 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: security
+  name: Security
+  description: Security — pull request security review, secret scanning, audit log review, vulnerability
+    triage.
+  icon: shield-check
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - security
+spec:
+  model:
+    name: claude-opus-5-5
+    effort: high
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - kubectl
+  - curl
+  - python
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: security.review_pr_security
+    description: Review a PR for security implications — secrets, auth bypass, injection, dependency CVEs.
+    inputs:
+      type: object
+      properties:
+        pr_number:
+          type: integer
+      required:
+      - pr_number
+    outputs:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum:
+          - approve
+          - request_changes
+          - block
+        findings:
+          type: array
+          items:
+            type: string
+      required:
+      - verdict
+    risk_level: low
+  - id: security.scan_secrets
+    description: Scan the repo (or a branch) for leaked secrets, tokens, keys.
+    inputs:
+      type: object
+      properties:
+        ref:
+          type: string
+          default: HEAD
+      required: []
+    outputs:
+      type: object
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+      required:
+      - findings
+    risk_level: low
+  - id: security.audit_logs
+    description: Review the platform audit stream for suspicious activity in a time window.
+    inputs:
+      type: object
+      properties:
+        since:
+          type: string
+          format: date-time
+        focus:
+          type: string
+      required:
+      - since
+    outputs:
+      type: object
+      properties:
+        anomalies:
+          type: array
+          items:
+            type: object
+      required:
+      - anomalies
+    risk_level: low

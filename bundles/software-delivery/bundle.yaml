@@ -1,0 +1,69 @@
+apiVersion: b2ai.dev/v1
+kind: Bundle
+metadata:
+  id: software-delivery
+  name: Software delivery team
+  description: A complete product engineering team. The product manager sets priorities for the tech lead,
+    who leads the architect, developer, QA and designer; the release manager runs releases with DevOps
+    and security.
+  icon: code-xml
+  version: 1.0.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - software-development
+  - management
+spec:
+  agents:
+  - id: product-manager
+    version: 1.1.0
+  - id: tech-lead
+    version: 1.1.0
+  - id: architect
+    version: 1.1.0
+  - id: developer
+    version: 1.1.0
+  - id: qa
+    version: 1.1.0
+  - id: designer
+    version: 1.1.0
+  - id: release-manager
+    version: 1.1.0
+  - id: devops
+    version: 1.1.0
+  - id: security
+    version: 1.1.0
+  relations:
+  - from: product-manager
+    to: tech-lead
+    kind: normal
+  - from: tech-lead
+    to: architect
+    kind: normal
+  - from: tech-lead
+    to: developer
+    kind: normal
+  - from: tech-lead
+    to: qa
+    kind: normal
+  - from: tech-lead
+    to: designer
+    kind: normal
+  - from: release-manager
+    to: devops
+    kind: normal
+  - from: release-manager
+    to: security
+    kind: normal
+  - from: tech-lead
+    to: release-manager
+    kind: peer
+  - from: developer
+    to: qa
+    kind: peer
+  - from: developer
+    to: security
+    kind: peer
+  router: product-manager

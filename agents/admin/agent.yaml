@@ -1,0 +1,141 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: admin
+  name: Admin
+  description: Low-level infrastructure — hosts, operating systems, networking, storage, backups, hypervisors
+    and cluster nodes at the OS level. Sibling of DevOps (CI/CD and deployments).
+  icon: server-cog
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - infrastructure
+  - operations
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - kubectl
+  - helm
+  - argocd
+  - curl
+  - ssh
+  - python
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: admin.configure_host
+    description: 'Configure host-level OS: apt packages, systemd units, sysctl, kernel modules, cron,
+      users/groups.'
+    inputs:
+      type: object
+      properties:
+        host:
+          type: string
+        change:
+          type: string
+          description: Describe the OS-level change to apply.
+      required:
+      - host
+      - change
+    outputs:
+      type: object
+      properties:
+        applied:
+          type: boolean
+        diff:
+          type: string
+      required:
+      - applied
+    risk_level: medium
+  - id: admin.manage_network
+    description: 'Configure firewall (nftables/iptables), routing tables, DNS, VPN (WireGuard and similar),
+      VLANs, bridges. CAUTION: a misconfiguration can cut remote access.'
+    inputs:
+      type: object
+      properties:
+        host:
+          type: string
+        change:
+          type: string
+      required:
+      - host
+      - change
+    outputs:
+      type: object
+      properties:
+        applied:
+          type: boolean
+        reachable:
+          type: boolean
+          description: Post-change reachability probe result.
+      required:
+      - applied
+    risk_level: high
+  - id: admin.manage_storage
+    description: Manage ZFS pools/datasets, LVM volumes, NFS exports, mount points. Snapshots, scrubs,
+      capacity planning.
+    inputs:
+      type: object
+      properties:
+        host:
+          type: string
+        operation:
+          type: string
+          enum:
+          - snapshot
+          - scrub
+          - resize
+          - mount
+          - unmount
+          - export
+        target:
+          type: string
+      required:
+      - host
+      - operation
+      - target
+    outputs:
+      type: object
+      properties:
+        result:
+          type: string
+      required:
+      - result
+    risk_level: medium
+  - id: admin.manage_backups
+    description: Run/verify backup jobs (restic, rsync, ZFS send, the hypervisor's backup tooling), restore
+      from snapshot, validate retention policy.
+    inputs:
+      type: object
+      properties:
+        target:
+          type: string
+        operation:
+          type: string
+          enum:
+          - run
+          - verify
+          - restore
+          - list
+      required:
+      - target
+      - operation
+    outputs:
+      type: object
+      properties:
+        status:
+          type: string
+        details:
+          type: object
+      required:
+      - status
+    risk_level: low

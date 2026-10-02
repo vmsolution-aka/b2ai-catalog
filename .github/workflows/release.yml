@@ -1,0 +1,98 @@
+# Release: a `vX.Y.Z` tag on a commit of main publishes `catalog.json` — every
+# agent and bundle with its version and content hash — on the GitHub release.
+# Installations read releases, never main (ADR-154 decision 4).
+#
+# catalog.json is produced by the SAME verifier image as the PR check (it
+# re-runs L1 and refuses to index an invalid catalog), so the index cannot
+# disagree with what was verified.
+name: release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  VERIFIER_IMAGE: ghcr.io/vmsolution-aka/b2ai-catalog-verifier:sha-67229a2@sha256:f9683caeee04525ae6d0105bf734e47f78968feab8cee790c13d445c57975a3b
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write  # create the release + upload catalog.json; this job only
+      packages: read  # pull the verifier image
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: head
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        working-directory: head
+        run: |
+          if ! [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::release tags are vMAJOR.MINOR.PATCH, got $TAG"; exit 1
+          fi
+          # Only reviewed content is released: the tagged commit must be on main.
+          # fetch-depth: 0 already fetched every branch; no credentials are
+          # persisted, so a second fetch would fail while the repo is private.
+          git rev-parse --verify -q origin/main >/dev/null \
+            || { echo "::error::origin/main missing from the checkout"; exit 1; }
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$TAG does not point at a commit on main"; exit 1
+          fi
+          # The previous release, for the version-bump rule.
+          prev=$(git tag --list 'v*.*.*' --sort=-v:refname --merged "$GITHUB_SHA" | grep -vx "$TAG" | head -1 || true)
+          echo "previous release: ${prev:-none}"
+          if [ -n "$prev" ]; then
+            git worktree add --detach ../base "$prev"
+          fi
+
+      # The verifier image is private until the org allows public packages; the
+      # job token can read it because this repo has Read access to the package.
+      # Remove this step once the image is public.
+      - name: Log in to GHCR (read-only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Pull the verifier image
+        run: docker pull "$VERIFIER_IMAGE"
+
+      - name: Verify against the previous release and build catalog.json
+        env:
+          TAG: ${{ github.ref_name }}
+          SOURCE: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          rm -rf head/.git base/.git
+          mkdir out && chmod 777 out
+          run=(docker run --rm --network none --read-only --cap-drop ALL
+               --security-opt no-new-privileges --user 1000:1000
+               -v "$PWD/head:/catalog:ro" -v "$PWD/out:/out")
+          if [ -d base ]; then
+            "${run[@]}" -v "$PWD/base:/base:ro" "$VERIFIER_IMAGE" \
+              validate /catalog --base /base --github
+          fi
+          "${run[@]}" "$VERIFIER_IMAGE" index /catalog \
+            --release "$TAG" --source "$SOURCE" -o /out/catalog.json
+          cd out && sha256sum catalog.json > catalog.json.sha256
+          python3 -c "import json; d=json.load(open('catalog.json')); print(len(d['agents']), 'agents,', len(d['bundles']), 'bundles')"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" out/catalog.json out/catalog.json.sha256 \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" \
+            --notes "Catalog release $TAG. Installations read \`catalog.json\` from this release. Verified with \`$VERIFIER_IMAGE\`."

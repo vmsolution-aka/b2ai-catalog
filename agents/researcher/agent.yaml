@@ -1,0 +1,161 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: researcher
+  name: Researcher
+  description: Web research and comparisons — answers 'find me X', compares options, fact-checks claims.
+  icon: search
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - research
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - curl
+  - python
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: research.web_search
+    description: Search the web for information.
+    inputs:
+      type: object
+      properties:
+        query:
+          type: string
+        max_results:
+          type: integer
+          default: 5
+        site:
+          type: string
+          description: Optional site filter, e.g., 'reddit.com'
+      required:
+      - query
+    outputs:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+      required:
+      - results
+    risk_level: none
+  - id: research.summarize_topic
+    description: Produce a summary on a topic from web + KB sources.
+    inputs:
+      type: object
+      properties:
+        topic:
+          type: string
+        depth:
+          type: string
+          enum:
+          - brief
+          - normal
+          - deep
+          default: normal
+      required:
+      - topic
+    outputs:
+      type: object
+      properties:
+        summary:
+          type: string
+        sources:
+          type: array
+          items:
+            type: string
+      required:
+      - summary
+    risk_level: none
+  - id: research.compare_options
+    description: Side-by-side comparison of named options.
+    inputs:
+      type: object
+      properties:
+        topic:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+          minItems: 2
+        criteria:
+          type: array
+          items:
+            type: string
+      required:
+      - topic
+      - options
+    outputs:
+      type: object
+      properties:
+        comparison_table:
+          type: object
+        recommendation:
+          type: string
+      required:
+      - comparison_table
+    risk_level: none
+  - id: research.fact_check
+    description: Verify a specific claim against web sources.
+    inputs:
+      type: object
+      properties:
+        claim:
+          type: string
+      required:
+      - claim
+    outputs:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum:
+          - true
+          - false
+          - partial
+          - unverifiable
+        evidence:
+          type: array
+          items:
+            type: object
+      required:
+      - verdict
+    risk_level: none
+  - id: research.find_local_service
+    description: Find local service providers (dentists, plumbers, daycares, ...).
+    inputs:
+      type: object
+      properties:
+        service_type:
+          type: string
+        location:
+          type: string
+        max_results:
+          type: integer
+          default: 5
+      required:
+      - service_type
+      - location
+    outputs:
+      type: object
+      properties:
+        providers:
+          type: array
+          items:
+            type: object
+      required:
+      - providers
+    risk_level: none

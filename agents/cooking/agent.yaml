@@ -1,0 +1,186 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: cooking
+  name: Cooking
+  description: Meal planning, recipes, shopping list generation, dietary tracking.
+  icon: chef-hat
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - food
+spec:
+  model:
+    name: claude-haiku-4-5
+  prompt: prompt.md
+  tools:
+  - curl
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: cooking.find_recipe
+    description: Search recipes (KB stored or web).
+    inputs:
+      type: object
+      properties:
+        ingredients_available:
+          type: array
+          items:
+            type: string
+        cuisine:
+          type: string
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+        max_minutes:
+          type: integer
+        dietary_constraints:
+          type: array
+          items:
+            type: string
+          description: e.g., vegetarian, gluten-free, no peanuts
+      required: []
+    outputs:
+      type: object
+      properties:
+        recipes:
+          type: array
+          items:
+            type: object
+      required:
+      - recipes
+    risk_level: none
+  - id: cooking.plan_week_meals
+    description: Generate a weekly meal plan honoring dietary restrictions.
+    inputs:
+      type: object
+      properties:
+        people_count:
+          type: integer
+          default: 2
+        start_date:
+          type: string
+          format: date
+        include_breakfast:
+          type: boolean
+          default: false
+        budget_per_meal:
+          type: number
+      required: []
+    outputs:
+      type: object
+      properties:
+        plan:
+          type: array
+          items:
+            type: object
+      required:
+      - plan
+    risk_level: none
+  - id: cooking.scale_recipe
+    description: Adjust a recipe to a different number of portions.
+    inputs:
+      type: object
+      properties:
+        recipe_id:
+          type: string
+        target_portions:
+          type: integer
+          minimum: 1
+      required:
+      - recipe_id
+      - target_portions
+    outputs:
+      type: object
+      properties:
+        scaled_ingredients:
+          type: array
+          items:
+            type: object
+      required:
+      - scaled_ingredients
+    risk_level: none
+  - id: cooking.add_to_shopping_list
+    description: Push ingredients to Household's shopping list (via dispatch).
+    inputs:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item:
+                type: string
+              quantity:
+                type: number
+              unit:
+                type: string
+      required:
+      - items
+    outputs:
+      type: object
+      properties:
+        added_count:
+          type: integer
+      required:
+      - added_count
+    risk_level: low
+  - id: cooking.log_meal
+    description: Record a meal served (dietary tracking).
+    inputs:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        meal:
+          type: string
+          enum:
+          - breakfast
+          - lunch
+          - dinner
+          - snack
+        dish:
+          type: string
+        people:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+      required:
+      - date
+      - meal
+      - dish
+    outputs:
+      type: object
+      properties:
+        log_id:
+          type: string
+      required:
+      - log_id
+    risk_level: low
+  - id: cooking.list_dietary_restrictions
+    description: Family-wide dietary rules (allergies, preferences).
+    inputs:
+      type: object
+      properties: {}
+      required: []
+    outputs:
+      type: object
+      properties:
+        restrictions:
+          type: array
+          items:
+            type: object
+      required:
+      - restrictions
+    risk_level: none

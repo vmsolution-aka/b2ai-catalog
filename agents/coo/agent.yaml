@@ -1,0 +1,143 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: coo
+  name: COO
+  description: Chief Operating Officer — sits between the leadership (the user) and the team managers,
+    breaks high-level goals into team-scoped work packages, dispatches them to managers and aggregates
+    their reports into one executive summary.
+  icon: target
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - management
+  - operations
+spec:
+  model:
+    name: claude-opus-5-5
+    effort: high
+  prompt: prompt.md
+  tools: []
+  extensions:
+    optional:
+    - kb
+  is_manager: true
+  capabilities:
+  - id: coo.break_down_initiative
+    description: Take a high-level leadership ask (feature, incident response, project) and split it into
+      per-division work packages with rationale for the split.
+    inputs:
+      type: object
+      properties:
+        initiative:
+          type: string
+        deadline:
+          type: string
+      required:
+      - initiative
+    outputs:
+      type: object
+      properties:
+        packages:
+          type: array
+          items:
+            type: object
+            properties:
+              division:
+                type: string
+                enum:
+                - dev
+                - ops
+                - business
+              manager:
+                type: string
+              scope:
+                type: string
+              priority:
+                type: string
+                enum:
+                - now
+                - this_week
+                - backlog
+      required:
+      - packages
+    risk_level: none
+  - id: coo.dispatch_to_managers
+    description: Forward a team-scoped work package to the matching manager (e.g. tech-lead, infra, product-manager
+      — whichever managers are in the routing table) and track the dispatch for later aggregation.
+    inputs:
+      type: object
+      properties:
+        manager:
+          type: string
+        scope:
+          type: string
+        deadline:
+          type: string
+      required:
+      - manager
+      - scope
+    outputs:
+      type: object
+      properties:
+        dispatched:
+          type: boolean
+      required:
+      - dispatched
+    risk_level: low
+  - id: coo.aggregate_status
+    description: Collect REPORTs from managers, deduplicate, surface blockers, write an executive summary
+      back to the user.
+    inputs:
+      type: object
+      properties:
+        reports:
+          type: array
+          items:
+            type: string
+      required:
+      - reports
+    outputs:
+      type: object
+      properties:
+        summary:
+          type: string
+        blockers:
+          type: array
+          items:
+            type: string
+      required:
+      - summary
+    risk_level: none
+  - id: coo.prioritize_backlog
+    description: Order pending initiatives by impact, dependency, and capacity across divisions. Used
+      at start of week / sprint.
+    inputs:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+      required:
+      - items
+    outputs:
+      type: object
+      properties:
+        ordered:
+          type: array
+          items:
+            type: object
+            properties:
+              item:
+                type: string
+              rank:
+                type: integer
+              reason:
+                type: string
+      required:
+      - ordered
+    risk_level: none

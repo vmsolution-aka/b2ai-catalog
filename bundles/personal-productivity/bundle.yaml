@@ -1,0 +1,40 @@
+apiVersion: b2ai.dev/v1
+kind: Bundle
+metadata:
+  id: personal-productivity
+  name: Personal productivity
+  description: 'Email, calendar, plans and research for one person: the planner uses the researcher and
+    the calendar; the inbox works with both.'
+  icon: clock
+  version: 1.0.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - email
+  - scheduling
+  - planning
+spec:
+  agents:
+  - id: inbox
+    version: 1.1.0
+  - id: calendar
+    version: 1.1.0
+  - id: planner
+    version: 1.1.0
+  - id: researcher
+    version: 1.1.0
+  relations:
+  - from: planner
+    to: researcher
+    kind: normal
+  - from: planner
+    to: calendar
+    kind: normal
+  - from: inbox
+    to: calendar
+    kind: peer
+  - from: inbox
+    to: researcher
+    kind: peer

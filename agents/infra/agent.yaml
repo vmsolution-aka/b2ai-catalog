@@ -1,0 +1,119 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: infra
+  name: Infra
+  description: Operations manager — service availability, infrastructure operations, incident response
+    and deploy coordination. Coordinates admin, DevOps and security.
+  icon: server
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - operations
+  - management
+spec:
+  model:
+    name: claude-opus-5-5
+    effort: high
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - kubectl
+  - helm
+  - argocd
+  - curl
+  - ssh
+  - python
+  extensions:
+    optional:
+    - kb
+  is_manager: true
+  capabilities:
+  - id: infra.check_health
+    description: Run a health check pass — Argo CD application status, Kubernetes pods, active alerts.
+    inputs:
+      type: object
+      properties:
+        scope:
+          type: string
+          default: all
+          description: '''all'', or a namespace / application name.'
+      required: []
+    outputs:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - down
+        details:
+          type: object
+      required:
+      - status
+    risk_level: low
+  - id: infra.investigate_incident
+    description: Drill into an active incident — recent deploys, alert chain, error logs, hypothesis.
+    inputs:
+      type: object
+      properties:
+        alert_name:
+          type: string
+        context:
+          type: string
+      required:
+      - alert_name
+    outputs:
+      type: object
+      properties:
+        root_cause:
+          type: string
+        recommended_action:
+          type: string
+      required:
+      - recommended_action
+    risk_level: medium
+  - id: infra.deploy_argo
+    description: Trigger an Argo CD sync for an application after pre-flight checks.
+    inputs:
+      type: object
+      properties:
+        app:
+          type: string
+        prune:
+          type: boolean
+          default: false
+      required:
+      - app
+    outputs:
+      type: object
+      properties:
+        sync_id:
+          type: string
+        status:
+          type: string
+      required:
+      - status
+    risk_level: high
+  - id: infra.write_postmortem
+    description: Author a post-mortem doc for a recent incident.
+    inputs:
+      type: object
+      properties:
+        incident_summary:
+          type: string
+      required:
+      - incident_summary
+    outputs:
+      type: object
+      properties:
+        doc_path:
+          type: string
+      required:
+      - doc_path
+    risk_level: none

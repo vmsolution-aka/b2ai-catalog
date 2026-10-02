@@ -1,0 +1,118 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: tech-lead
+  name: Tech Lead
+  description: Engineering team lead — breaks features into tasks, assigns them to the architect, developer,
+    QA and designer, reviews designs and aggregates their reports.
+  icon: compass
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - engineering
+  - management
+spec:
+  model:
+    name: claude-opus-5-5
+    effort: high
+  prompt: prompt.md
+  tools:
+  - git
+  - gh
+  - kubectl
+  - curl
+  extensions:
+    optional:
+    - kb
+  is_manager: true
+  capabilities:
+  - id: tech-lead.review_design
+    description: Review an ADR or design proposal — gather feedback, flag risks.
+    inputs:
+      type: object
+      properties:
+        design_doc_url:
+          type: string
+        focus:
+          type: string
+      required:
+      - design_doc_url
+    outputs:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum:
+          - approve
+          - request_changes
+          - comment
+        summary:
+          type: string
+      required:
+      - verdict
+    risk_level: none
+  - id: tech-lead.break_down_task
+    description: Decompose a feature request into smaller engineering tasks.
+    inputs:
+      type: object
+      properties:
+        feature_request:
+          type: string
+        target_iteration:
+          type: string
+      required:
+      - feature_request
+    outputs:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            type: object
+      required:
+      - tasks
+    risk_level: none
+  - id: tech-lead.assign_owner
+    description: Assign a task to a specific team member (architect / developer / QA / designer) by skill
+      match.
+    inputs:
+      type: object
+      properties:
+        task_spec:
+          type: string
+        candidates:
+          type: array
+          items:
+            type: string
+      required:
+      - task_spec
+    outputs:
+      type: object
+      properties:
+        assignee:
+          type: string
+        reason:
+          type: string
+      required:
+      - assignee
+    risk_level: none
+  - id: tech-lead.daily_summary
+    description: Produce a daily summary of the team's activity (open PRs, blockers, completed tasks).
+    inputs:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+      required:
+      - date
+    outputs:
+      type: object
+      properties:
+        markdown:
+          type: string
+      required:
+      - markdown
+    risk_level: none

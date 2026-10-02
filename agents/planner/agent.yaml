@@ -1,0 +1,190 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: planner
+  name: Planner
+  description: Long-horizon non-travel project manager — parties, renovations, life events. Breaks goals
+    into milestones.
+  icon: list-checks
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - planning
+spec:
+  model:
+    name: claude-sonnet-5-5
+    effort: medium
+  prompt: prompt.md
+  tools:
+  - curl
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: planner.list_projects
+    description: Active long-horizon projects.
+    inputs:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - active
+          - on_hold
+          - completed
+          - all
+          default: active
+      required: []
+    outputs:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            type: object
+      required:
+      - projects
+    risk_level: none
+  - id: planner.create_project
+    description: Create a new project entry in KB.
+    inputs:
+      type: object
+      properties:
+        title:
+          type: string
+        target_date:
+          type: string
+          format: date
+        description:
+          type: string
+        budget_estimate:
+          type: number
+      required:
+      - title
+    outputs:
+      type: object
+      properties:
+        project_id:
+          type: string
+      required:
+      - project_id
+    risk_level: low
+  - id: planner.add_milestone
+    description: Add a milestone to a project.
+    inputs:
+      type: object
+      properties:
+        project_id:
+          type: string
+        title:
+          type: string
+        target_date:
+          type: string
+          format: date
+        notes:
+          type: string
+      required:
+      - project_id
+      - title
+      - target_date
+    outputs:
+      type: object
+      properties:
+        milestone_id:
+          type: string
+      required:
+      - milestone_id
+    risk_level: low
+  - id: planner.research_options
+    description: Dispatch to Researcher and aggregate findings into a project's research log.
+    inputs:
+      type: object
+      properties:
+        project_id:
+          type: string
+        question:
+          type: string
+      required:
+      - project_id
+      - question
+    outputs:
+      type: object
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+      required:
+      - findings
+    risk_level: none
+  - id: planner.budget_estimate
+    description: Rough budget projection for a project.
+    inputs:
+      type: object
+      properties:
+        project_id:
+          type: string
+      required:
+      - project_id
+    outputs:
+      type: object
+      properties:
+        estimate:
+          type: number
+        breakdown:
+          type: object
+      required:
+      - estimate
+    risk_level: none
+  - id: planner.commit_to_vendor
+    description: Sign a contract / make a committed booking (HIGH — irreversible financial commitment).
+    inputs:
+      type: object
+      properties:
+        project_id:
+          type: string
+        vendor:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          description: ISO 4217 currency code; when omitted, the user's own currency from context.
+        commitment_description:
+          type: string
+      required:
+      - project_id
+      - vendor
+      - amount
+      - commitment_description
+    outputs:
+      type: object
+      properties:
+        commitment_id:
+          type: string
+      required:
+      - commitment_id
+    risk_level: high
+    requires_user_approval: true
+  - id: planner.cancel_project
+    description: Archive a project + notify dependents.
+    inputs:
+      type: object
+      properties:
+        project_id:
+          type: string
+        reason:
+          type: string
+      required:
+      - project_id
+    outputs:
+      type: object
+      properties:
+        archived:
+          type: boolean
+      required:
+      - archived
+    risk_level: medium

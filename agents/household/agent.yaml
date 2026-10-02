@@ -1,0 +1,252 @@
+apiVersion: b2ai.dev/v1
+kind: Agent
+metadata:
+  id: household
+  name: Household
+  description: Household operations specialist — inventory, supplies, vendors, repairs, routine maintenance.
+  icon: house
+  version: 1.1.0
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - personal
+  - household
+spec:
+  model:
+    name: claude-haiku-4-5
+  prompt: prompt.md
+  tools:
+  - curl
+  extensions:
+    optional:
+    - kb
+  capabilities:
+  - id: inventory.list
+    description: Current household inventory, optionally filtered by area or category.
+    inputs:
+      type: object
+      properties:
+        area:
+          type: string
+          description: e.g., kitchen, garage, bathroom
+        category:
+          type: string
+          description: e.g., consumables, tools, electronics
+      required: []
+    outputs:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+      required:
+      - items
+    risk_level: none
+  - id: inventory.update
+    description: Add, remove, or restock an inventory item.
+    inputs:
+      type: object
+      properties:
+        item:
+          type: string
+        delta:
+          type: number
+          description: Positive to add, negative to consume
+        area:
+          type: string
+        unit:
+          type: string
+          default: unit
+      required:
+      - item
+      - delta
+    outputs:
+      type: object
+      properties:
+        new_quantity:
+          type: number
+      required:
+      - new_quantity
+    risk_level: low
+  - id: inventory.predict_runout
+    description: Estimate when a consumable will run out based on consumption history.
+    inputs:
+      type: object
+      properties:
+        item:
+          type: string
+      required:
+      - item
+    outputs:
+      type: object
+      properties:
+        estimated_runout_date:
+          type: string
+          format: date
+        confidence:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+      required:
+      - estimated_runout_date
+    risk_level: none
+  - id: inventory.shopping_list_generate
+    description: Build a shopping list from low-stock items + planned meals.
+    inputs:
+      type: object
+      properties:
+        include_meals_for_days:
+          type: integer
+          default: 7
+      required: []
+    outputs:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+      required:
+      - items
+    risk_level: low
+  - id: repair.list_open
+    description: Open repair tickets / issues.
+    inputs:
+      type: object
+      properties:
+        area:
+          type: string
+      required: []
+    outputs:
+      type: object
+      properties:
+        tickets:
+          type: array
+          items:
+            type: object
+      required:
+      - tickets
+    risk_level: low
+  - id: repair.create
+    description: Log a new repair need.
+    inputs:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        area:
+          type: string
+        urgency:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          default: normal
+      required:
+      - title
+      - area
+    outputs:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+      required:
+      - ticket_id
+    risk_level: low
+  - id: repair.schedule_vendor
+    description: Book a vendor visit (creates calendar event + KB entry).
+    inputs:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+        vendor:
+          type: string
+        when_iso:
+          type: string
+          format: date-time
+        estimated_cost:
+          type: number
+      required:
+      - ticket_id
+      - vendor
+      - when_iso
+    outputs:
+      type: object
+      properties:
+        appointment_id:
+          type: string
+      required:
+      - appointment_id
+    risk_level: medium
+  - id: vendor.contact
+    description: Send a message to a vendor (via Inbox).
+    inputs:
+      type: object
+      properties:
+        vendor:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+      required:
+      - vendor
+      - subject
+      - body
+    outputs:
+      type: object
+      properties:
+        message_id:
+          type: string
+      required:
+      - message_id
+    risk_level: medium
+  - id: maintenance.list_routine
+    description: Routine recurring tasks (filter change, gutter cleaning, ...).
+    inputs:
+      type: object
+      properties:
+        due_within_days:
+          type: integer
+          default: 30
+      required: []
+    outputs:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            type: object
+      required:
+      - tasks
+    risk_level: none
+  - id: maintenance.complete
+    description: Mark a routine maintenance task as done.
+    inputs:
+      type: object
+      properties:
+        task_id:
+          type: string
+        notes:
+          type: string
+      required:
+      - task_id
+    outputs:
+      type: object
+      properties:
+        completed:
+          type: boolean
+        next_due:
+          type: string
+          format: date
+      required:
+      - completed
+    risk_level: low
