@@ -19,7 +19,9 @@ tags.yaml                 tag vocabulary (a tag outside it is flagged for review
    schema, tools only from the platform's tools catalog, required extensions exist,
    bundle references resolve without cycles, a version bump for every changed agent or
    bundle, no binaries, no credentials, prompt present and within the size cap, tag
-   format and count (a new tag is a warning for the reviewer).
+   format and count (a new tag is a warning for the reviewer). **L2** then installs every
+   changed agent and every bundle containing one through the platform's real install path
+   on a throwaway database (units, spawn specs — no pod — relations, re-install no-op).
 3. **Owner review (required).** CODEOWNERS: nothing merges without the owner's approval.
 4. **Release.** Installations read **releases**, never `main`. A `vX.Y.Z` tag publishes
    `catalog.json` (every agent and bundle with its version and content hash) on the

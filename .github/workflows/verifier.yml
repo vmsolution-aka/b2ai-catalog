@@ -1,4 +1,4 @@
-# The catalog verifier, level L1 (vmsolution-aka/b2ai-platform#1201).
+# The catalog verifier, levels L1 + L2 (vmsolution-aka/b2ai-platform#1201).
 #
 # Security model — this repository is public and takes PRs from strangers:
 # - `pull_request`, NEVER `pull_request_target`: a fork PR gets a read-only token
@@ -9,7 +9,7 @@
 # - The PR's content is only ever READ by the verifier: mounted read-only into a
 #   container with no network, no capabilities and a read-only root filesystem.
 #
-# The job name below is the required status check in branch protection on main.
+# The job names (verifier-l1, verifier-l2) are the required status checks in branch protection on main.
 name: verifier
 
 on:
@@ -30,6 +30,9 @@ env:
   # Built from b2ai-platform (catalog/Dockerfile): the platform's own validator
   # plus its tools catalog and built-in extensions. Bump deliberately, by digest.
   VERIFIER_IMAGE: ghcr.io/vmsolution-aka/b2ai-catalog-verifier:sha-67229a2@sha256:f9683caeee04525ae6d0105bf734e47f78968feab8cee790c13d445c57975a3b
+  # L2 (install dry-run): the broker itself + a throwaway Postgres, built from
+  # b2ai-platform (catalog/Dockerfile.l2). Bump deliberately, by digest.
+  VERIFIER_L2_IMAGE: ghcr.io/vmsolution-aka/b2ai-catalog-verifier-l2:sha-67229a2@sha256:a7ae44dfb3cb23ad2ef609315481ad73463655584037716069694dd83db4fa7f
 
 jobs:
   l1:
@@ -85,3 +88,56 @@ jobs:
           docker run --rm --network none --read-only --cap-drop ALL \
             --security-opt no-new-privileges --user 1000:1000 \
             "${mounts[@]}" "$VERIFIER_IMAGE" "${args[@]}"
+
+  # L2: every changed agent and every bundle containing one is installed by the
+  # platform's real install path (POST /catalog/install) on a throwaway
+  # database: units, spawn specs (no pod is started), relations, re-install
+  # no-op. Same isolation as L1; the database lives in the container's tmpfs.
+  l2:
+    name: verifier-l2
+    needs: l1
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: head
+          persist-credentials: false
+
+      - id: base
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            echo "sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.base.outputs.sha != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.base.outputs.sha }}
+          path: base
+          persist-credentials: false
+
+      - name: Log in to GHCR (read-only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Pull the L2 verifier image
+        run: docker pull "$VERIFIER_L2_IMAGE"
+
+      - name: L2 install dry-run
+        env:
+          HAS_BASE: ${{ steps.base.outputs.sha != '' }}
+        run: |
+          rm -rf head/.git base/.git
+          args=(/catalog --github)
+          mounts=(-v "$PWD/head:/catalog:ro")
+          if [ "$HAS_BASE" = "true" ]; then
+            args+=(--base /base)
+            mounts+=(-v "$PWD/base:/base:ro")
+          fi
+          docker run --rm --network none --read-only --tmpfs /tmp --cap-drop ALL \
+            --security-opt no-new-privileges --user 1000:1000 \
+            "${mounts[@]}" "$VERIFIER_L2_IMAGE" "${args[@]}"
