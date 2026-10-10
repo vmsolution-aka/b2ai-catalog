@@ -96,3 +96,17 @@ jobs:
           gh release create "$TAG" out/catalog.json out/catalog.json.sha256 \
             --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" \
             --notes "Catalog release $TAG. Installations read \`catalog.json\` from this release. Verified with \`$VERIFIER_IMAGE\`."
+
+      # Ask the platform to run the L2 install dry-run on this release
+      # (b2ai-platform .github/workflows/catalog-l2.yml; the L2 image is private).
+      # Needs PLATFORM_DISPATCH_TOKEN (fine-grained PAT or App token scoped to
+      # b2ai-platform, Contents: write); skipped without it. This job runs only
+      # for a maintainer's tag push on main, never for fork PRs.
+      - name: Ping the platform for L2 on this release
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_DISPATCH_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "no PLATFORM_DISPATCH_TOKEN, skipping"; exit 0; }
+          gh api repos/vmsolution-aka/b2ai-platform/dispatches \
+            -f event_type=catalog-release -F "client_payload[ref]=$TAG"
