@@ -4,8 +4,6 @@
 # organisation supplies its repositories, hosts and clusters at run time.
 #
 # Scope: what installs into a customer's account — agents/, bundles/, extensions/, tags.yaml.
-# The one exemption: a digest-pinned `image: ghcr.io/<org>/b2ai-<service>@sha256:...` line of an
-# extension (the platform's own published image); the verifier applies the same rule.
 # Temporary: to be replaced by a verifier L1 rule in b2ai-platform.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -27,10 +25,24 @@ terms=(
 pattern=$(IFS='|'; echo "${terms[*]}")
 targets=(agents bundles extensions tags.yaml)
 
-image_line='^[^:]*:[0-9]+:[[:space:]]*image:[[:space:]]*ghcr\.io/[a-z0-9-]+/b2ai-[a-z0-9-]+@sha256:[0-9a-f]{64}[[:space:]]*$'
-if hits=$(grep -rniE "$pattern" -- "${targets[@]}" 2>/dev/null | grep -vE "$image_line"); then
+# The one exemption: the value of `spec.runtime.image` of an extension (4-space indent, as the
+# manifests are written), when it is exactly the official platform image
+# ghcr.io/vmsolution-aka/b2ai-<service>@sha256:<digest> and the service part has no owner term.
+# Any other line, in any other file, is checked. The verifier applies the same rule on the parsed
+# YAML; this script is the cheap second check.
+image_re='^extensions/[^:]+/extension\.yaml:[0-9]+:    image: ghcr\.io/vmsolution-aka/b2ai-([a-z0-9]+(-[a-z0-9]+)*)@sha256:[0-9a-f]{64}$'
+
+hits=""
+while IFS= read -r line; do
+  if [[ $line =~ $image_re ]] && ! grep -qiE "$pattern" <<<"b2ai-${BASH_REMATCH[1]}"; then
+    continue
+  fi
+  hits+="$line"$'\n'
+done < <(grep -rniE "$pattern" -- "${targets[@]}" 2>/dev/null || true)
+
+if [ -n "$hits" ]; then
   echo "Owner-specific terms found (catalog content must be generic):"
-  echo "$hits"
+  printf '%s' "$hits"
   exit 1
 fi
 echo "owner-terms: 0 hits in ${targets[*]}"

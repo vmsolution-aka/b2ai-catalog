@@ -63,6 +63,6 @@ spec:
       description: Get the current state and attributes of an entity.
     - id: homeassistant.call_service
       description: ACTION - call a Home Assistant service (turn_on, turn_off, ...).
-      risk_level: MEDIUM
+      risk_level: HIGH
     - id: homeassistant.get_history
       description: Get the state history of an entity (hours back).
