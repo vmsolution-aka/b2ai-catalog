@@ -1,11 +1,19 @@
 # Tag vocabulary (ADR-154 decision 10). A tag outside this list is a verifier warning.
 tags:
+- tag: accounting
+  description: Invoices, books and tax obligations.
 - tag: architecture
   description: System design, ADRs and technical trade-offs.
+- tag: atlassian
+  description: Jira, Confluence and Bitbucket.
 - tag: ci-cd
   description: Build, test and deployment pipelines.
+- tag: communication
+  description: Chat and messaging with people.
 - tag: design
   description: UX and UI design, mockups and design review.
+- tag: documentation
+  description: Wikis, docs and knowledge pages.
 - tag: email
   description: Reading, triaging and writing email.
 - tag: engineering
@@ -16,12 +24,16 @@ tags:
   description: 'Money: bills, budgets, expenses and payments.'
 - tag: food
   description: Meals, recipes and shopping lists.
+- tag: git
+  description: Repositories, branches and pull requests.
 - tag: health
   description: Appointments, medication and wellbeing.
 - tag: household
   description: 'Running a home: supplies, repairs and vendors.'
 - tag: infrastructure
   description: Hosts, networks, storage and clusters.
+- tag: integration
+  description: Connects an external service to agents.
 - tag: management
   description: 'Coordinates other agents: breaks down work and aggregates reports.'
 - tag: operations
@@ -40,6 +52,8 @@ tags:
   description: Calendars, free time and reminders.
 - tag: security
   description: Security review, secrets and vulnerability triage.
+- tag: smart-home
+  description: Home automation and connected devices.
 - tag: software-development
   description: Writing, fixing and reviewing code.
 - tag: testing

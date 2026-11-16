@@ -1,0 +1,73 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: infakt
+  name: inFakt
+  version: 1.0.0
+  description: |-
+    inFakt, a Polish online accounting service, from the chat: invoices, clients and period reports. An agent
+    calls infakt.list_invoices to check what was issued in the current period.
+
+    Needs one API key per account (sent as the X-inFakt-ApiKey header). Find it in inFakt under Settings, Users,
+    API. The key is stored encrypted in the extension's own space.
+
+    Creating an invoice (create_invoice) goes through the approval flow: the agent asks the user before issuing it.
+  icon: receipt
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - finance
+  - accounting
+  - integration
+spec:
+  type: passive
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  credentials:
+    type: token
+    scopes:
+    - personal
+    - agent
+  config:
+    schema:
+      type: object
+      required:
+      - infakt_api_key
+      properties:
+        infakt_api_key:
+          type: string
+          x-b2ai-secret: true
+          description: Personal API key (32 hex characters). Settings, Users, API in inFakt.
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-agent@sha256:d842b5d24ba54650e15cacf3483cf5dc93d1463420362a1129374340add0e38e
+    outbound_hosts:
+    - api.infakt.pl:443
+  mcp:
+    server: infakt
+    transport: stdio
+    tools:
+    - id: infakt.list_invoices
+      description: List sales invoices (filter by status, date range, client_id).
+    - id: infakt.get_invoice
+      description: Get the full invoice by id (positions, totals, status).
+    - id: infakt.create_invoice
+      description: ACTION - create a new sales invoice. Request user approval first.
+      risk_level: HIGH
+    - id: infakt.update_invoice
+      description: ACTION - update fields of a draft invoice (status, due_date, notes).
+      risk_level: MEDIUM
+    - id: infakt.mark_as_paid
+      description: ACTION - mark an invoice as paid (records payment date and amount).
+      risk_level: MEDIUM
+    - id: infakt.list_clients
+      description: List clients (contractors), with an optional search query.
+    - id: infakt.get_client
+      description: Get the full client by id (tax id, address, contact).
+    - id: infakt.get_summary
+      description: 'Aggregate figures for a period: total revenue, invoice count, by status.'
+    - id: infakt.list_taxes
+      description: Tax obligations for a period (VAT, PIT) computed from invoices.
+    - id: infakt.get_revenue_by_period
+      description: Revenue grouped by month or quarter for a year.

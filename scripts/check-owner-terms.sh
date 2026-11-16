@@ -3,7 +3,9 @@
 # infrastructure (#1193). Catalog agents must be generic: the installing
 # organisation supplies its repositories, hosts and clusters at run time.
 #
-# Scope: what installs into a customer's account — agents/, bundles/, tags.yaml.
+# Scope: what installs into a customer's account — agents/, bundles/, extensions/, tags.yaml.
+# The one exemption: a digest-pinned `image: ghcr.io/<org>/b2ai-<service>@sha256:...` line of an
+# extension (the platform's own published image); the verifier applies the same rule.
 # Temporary: to be replaced by a verifier L1 rule in b2ai-platform.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -23,9 +25,10 @@ terms=(
 )
 
 pattern=$(IFS='|'; echo "${terms[*]}")
-targets=(agents bundles tags.yaml)
+targets=(agents bundles extensions tags.yaml)
 
-if hits=$(grep -rniE "$pattern" -- "${targets[@]}" 2>/dev/null); then
+image_line='^[^:]*:[0-9]+:[[:space:]]*image:[[:space:]]*ghcr\.io/[a-z0-9-]+/b2ai-[a-z0-9-]+@sha256:[0-9a-f]{64}[[:space:]]*$'
+if hits=$(grep -rniE "$pattern" -- "${targets[@]}" 2>/dev/null | grep -vE "$image_line"); then
   echo "Owner-specific terms found (catalog content must be generic):"
   echo "$hits"
   exit 1

@@ -1,0 +1,71 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: jira
+  name: Jira
+  version: 1.0.0
+  description: |-
+    Jira Cloud from the chat: search issues with JQL, read details, list workflow transitions, comment and move
+    issues. An agent calls jira.search or jira.get_issue to check the state of the work without leaving the
+    conversation.
+
+    Needs an Atlassian API token (Basic auth, email and token) and the site name. Create the token at
+    id.atlassian.com under Security, API tokens. The token is stored encrypted in the extension's own space.
+
+    Writing (add_comment, transition) goes through the approval flow.
+  icon: list-checks
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - software-development
+  - atlassian
+  - integration
+spec:
+  type: passive
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  credentials:
+    type: basic
+    scopes:
+    - personal
+    - agent
+  config:
+    schema:
+      type: object
+      required:
+      - atlassian_site
+      - atlassian_email
+      - atlassian_api_token
+      properties:
+        atlassian_site:
+          type: string
+          description: Atlassian site, e.g. yourorg.atlassian.net
+        atlassian_email:
+          type: string
+          description: Atlassian account email.
+        atlassian_api_token:
+          type: string
+          x-b2ai-secret: true
+          description: Atlassian API token (id.atlassian.com, Security, API tokens).
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-agent@sha256:d842b5d24ba54650e15cacf3483cf5dc93d1463420362a1129374340add0e38e
+    outbound_hosts:
+    - '*.atlassian.net:443'
+  mcp:
+    server: jira
+    transport: stdio
+    tools:
+    - id: jira.search
+      description: Search issues with JQL.
+    - id: jira.get_issue
+      description: Get the full issue, including its description, by key.
+    - id: jira.list_transitions
+      description: List the workflow transitions available for an issue.
+    - id: jira.add_comment
+      description: ACTION - add a comment to an issue. Request user approval first.
+      risk_level: MEDIUM
+    - id: jira.transition
+      description: ACTION - move an issue through a workflow transition. Request user approval first.
+      risk_level: MEDIUM

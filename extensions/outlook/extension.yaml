@@ -1,0 +1,52 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: outlook
+  name: Outlook
+  version: 1.0.0
+  description: |-
+    Microsoft Outlook mail and calendar from the chat: list and read mail, send mail, list calendar events and
+    create events. One extension runs both platform servers, outlook-mail and outlook-calendar.
+
+    Connects with Microsoft OAuth: you sign in and consent for your mailbox and calendar; no password is
+    pasted. The grant is stored encrypted by the platform.
+
+    Sending mail (send_mail) and creating events (create_event) go through the approval flow.
+  icon: mail
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - email
+  - scheduling
+  - integration
+spec:
+  type: passive
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  credentials:
+    type: oauth
+    preset: outlook
+    scopes:
+    - personal
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-agent@sha256:d842b5d24ba54650e15cacf3483cf5dc93d1463420362a1129374340add0e38e
+    outbound_hosts:
+    - graph.microsoft.com:443
+  mcp:
+    server: outlook-mail
+    transport: stdio
+    tools:
+    - id: outlook-mail.list_mail
+      description: List the latest messages of the inbox.
+    - id: outlook-mail.read_mail
+      description: 'Read a full message: subject, sender, recipients, body, attachment metadata.'
+    - id: outlook-mail.send_mail
+      description: ACTION - send a message to a list of addresses. Request user approval first.
+      risk_level: HIGH
+    - id: outlook-calendar.list_events
+      description: List the next calendar events.
+    - id: outlook-calendar.create_event
+      description: ACTION - create a calendar event (UTC ISO times). Request user approval first.
+      risk_level: MEDIUM

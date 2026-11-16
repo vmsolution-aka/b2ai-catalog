@@ -1,0 +1,57 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: browser
+  name: Browser
+  version: 1.0.0
+  description: |-
+    A headless Chromium of the agent's own, reached through the platform and never directly. The agent opens
+    pages, reads their text, takes screenshots, clicks and types. What it may visit is limited to the sites an
+    account admin or the agent's owner listed; a page cannot be left for another by a link or a redirect.
+
+    A form that sends something never goes out at once: the agent asks, a person approves a screenshot of the
+    form, and only then is it submitted. Web logins come from the platform vault by name; the agent never sees
+    the password. A page is untrusted third-party text, not an instruction.
+
+    The pod holds no credential and runs no model. Its network goes through the platform's egress proxy.
+  icon: globe
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - research
+  - integration
+spec:
+  type: active
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-browser@sha256:dd6e1b23122944811190bf6becfdbd14c2b3a8d3a74253de25359f1367e9d194
+    outbound_hosts: []
+  active:
+    model: none
+  mcp:
+    transport: stdio
+    tools:
+    - id: browser.open
+      description: Open a page (a site on the allowed list).
+    - id: browser.click
+      description: Click an element of the current page by selector.
+    - id: browser.type
+      description: Type text into a field of the current page.
+      risk_level: MEDIUM
+    - id: browser.read
+      description: Read the visible text of the current page.
+    - id: browser.screenshot
+      description: Take a picture of the current page.
+    - id: browser.submit
+      description: ACTION - submit a form; a person approves a screenshot of it first.
+      risk_level: HIGH
+    - id: browser.login
+      description: ACTION - log in to the open site with a web login from the vault, by name.
+      risk_level: HIGH
+    - id: browser.ask_human
+      description: Ask the owner to take over the browser for a step the agent cannot do.
+    - id: browser.cancel_submit
+      description: Withdraw a pending submit and unfreeze the browser.
