@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: infakt
   name: inFakt
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     inFakt, a Polish online accounting service, from the chat: invoices, clients and period reports. An agent
     calls infakt.list_invoices to check what was issued in the current period.

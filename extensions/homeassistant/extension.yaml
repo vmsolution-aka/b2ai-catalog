@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: homeassistant
   name: Home Assistant
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     Control entities and read state of your Home Assistant instance. Each instance runs as its own active
     extension pod, with a model and a prompt on top of the Home Assistant REST API, and can be named per home.

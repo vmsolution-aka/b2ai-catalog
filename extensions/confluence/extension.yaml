@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: confluence
   name: Confluence
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     Confluence Cloud from the chat: search with CQL, read pages and create pages. An agent calls
     confluence.search or confluence.get_page to reach documentation without leaving the conversation.

@@ -7,7 +7,7 @@ into teams with reporting lines.
 ```
 agents/<id>/agent.yaml    kind: Agent — tools, extensions, capabilities (with risk), model
 agents/<id>/prompt.md     the agent's instructions
-extensions/<id>/extension.yaml  kind: Extension — an external API + settings + MCP tools (ADR-165)
+extensions/<id>/extension.yaml  kind: AgentPlugin — an external API + settings + MCP tools (ADR-165)
 bundles/<id>/bundle.yaml  kind: Bundle — agents pinned to exact versions + relations
 tags.yaml                 tag vocabulary (a tag outside it is flagged for review)
 ```

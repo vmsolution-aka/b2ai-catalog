@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: jira
   name: Jira
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     Jira Cloud from the chat: search issues with JQL, read details, list workflow transitions, comment and move
     issues. An agent calls jira.search or jira.get_issue to check the state of the work without leaving the

@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: github
   name: GitHub
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     GitHub from the chat: repositories, issues, pull requests and code search. An agent calls
     github.list_issues, github.get_pull_request or github.search_code to check the state of a repository without

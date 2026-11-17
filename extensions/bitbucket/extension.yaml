@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: bitbucket
   name: Bitbucket
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     Bitbucket Cloud from the chat: repositories, pull requests and comments. An agent calls
     bitbucket.list_pull_requests or bitbucket.get_pull_request to check the state of pull requests without leaving
