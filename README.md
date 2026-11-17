@@ -7,6 +7,7 @@ into teams with reporting lines.
 ```
 agents/<id>/agent.yaml    kind: Agent — tools, extensions, capabilities (with risk), model
 agents/<id>/prompt.md     the agent's instructions
+extensions/<id>/extension.yaml  kind: Extension — an external API + settings + MCP tools (ADR-165)
 bundles/<id>/bundle.yaml  kind: Bundle — agents pinned to exact versions + relations
 tags.yaml                 tag vocabulary (a tag outside it is flagged for review)
 ```
@@ -16,7 +17,8 @@ tags.yaml                 tag vocabulary (a tag outside it is flagged for review
 1. **Pull request.** Every change, from anyone, is a PR against `main`.
 2. **Verifier (required check).** CI runs the platform's own validator — the
    `b2ai-catalog-verifier` image built from the platform, pinned by digest — on the PR:
-   schema, tools only from the platform's tools catalog, required extensions exist,
+   schema, tools only from the platform's tools catalog, an extension's MCP server and tools only from
+   the platform's own (the image carries the platform's lists, so CI passes none), required extensions exist,
    bundle references resolve without cycles, a version bump for every changed agent or
    bundle, no binaries, no credentials, prompt present and within the size cap, tag
    format and count (a new tag is a warning for the reviewer).

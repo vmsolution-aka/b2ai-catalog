@@ -21,6 +21,7 @@ arrives as a pull request, passes the **verifier**, and is merged only after the
 agents/<id>/agent.yaml    kind: Agent — model, tools, extensions, capabilities (with risk)
 agents/<id>/prompt.md     the agent's instructions (plain Markdown)
 bundles/<id>/bundle.yaml  kind: Bundle — agents pinned to exact versions + reporting lines
+extensions/<id>/extension.yaml  kind: Extension — an external API, its settings and MCP tools
 tags.yaml                 tag vocabulary
 ```
 
@@ -131,6 +132,13 @@ extensions it accepts are the platform's, listed in the image:
 ```sh
 docker run --rm --entrypoint cat "$IMAGE" /platform/tools.json /platform/extensions.json
 ```
+
+An extension is checked against the platform's MCP servers and tools too
+(`/platform/mcp_servers.json`, `/platform/mcp_tools.json`; the image sets `B2AI_MCP_SERVERS` and
+`B2AI_MCP_TOOLS`, so nothing is passed on the command line). A passive extension runs code the
+platform ships: its `spec.mcp.server` and tools must be the platform's own, and a new server
+arrives with a platform release first, then the catalog entry that needs it
+(`spec.requires.platform`). An active extension is a digest-pinned image.
 
 ## Open the pull request
 

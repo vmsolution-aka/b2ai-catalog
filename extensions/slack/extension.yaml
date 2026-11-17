@@ -1,0 +1,47 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: slack
+  name: Slack
+  version: 1.0.0
+  description: |-
+    Slack from the chat: list channels, search messages and post messages. An agent calls
+    slack.search_messages or slack.list_channels to find a conversation, and slack.send_message to write to a
+    channel.
+
+    Connects with Slack OAuth: you authorise the b2ai app for your workspace; no token is pasted. The grant is
+    stored encrypted by the platform.
+
+    Posting a message (send_message) goes through the approval flow.
+  icon: message-square
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - communication
+  - integration
+spec:
+  type: passive
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  credentials:
+    type: oauth
+    preset: slack
+    scopes:
+    - personal
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-agent@sha256:d842b5d24ba54650e15cacf3483cf5dc93d1463420362a1129374340add0e38e
+    outbound_hosts:
+    - slack.com:443
+  mcp:
+    server: slack
+    transport: stdio
+    tools:
+    - id: slack.list_channels
+      description: List the channels the app has access to.
+    - id: slack.search_messages
+      description: Search messages with Slack search syntax (e.g. from:@user keyword).
+    - id: slack.send_message
+      description: 'ACTION - post a message to a channel (id or #name). Request user approval first.'
+      risk_level: MEDIUM

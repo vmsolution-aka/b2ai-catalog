@@ -1,0 +1,68 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: bitbucket
+  name: Bitbucket
+  version: 1.0.0
+  description: |-
+    Bitbucket Cloud from the chat: repositories, pull requests and comments. An agent calls
+    bitbucket.list_pull_requests or bitbucket.get_pull_request to check the state of pull requests without leaving
+    the conversation.
+
+    Needs a Bitbucket username, an app password and a workspace slug (Bitbucket, Personal settings, App passwords).
+    The app password is stored encrypted in the extension's own space.
+
+    Writing (add_pr_comment) goes through the approval flow.
+  icon: git-pull-request
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - software-development
+  - git
+  - integration
+spec:
+  type: passive
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  credentials:
+    type: basic
+    scopes:
+    - personal
+    - agent
+  config:
+    schema:
+      type: object
+      required:
+      - bitbucket_username
+      - bitbucket_app_password
+      - bitbucket_workspace
+      properties:
+        bitbucket_username:
+          type: string
+          description: Bitbucket username (not the email).
+        bitbucket_app_password:
+          type: string
+          x-b2ai-secret: true
+          description: App password (Personal settings, App passwords).
+        bitbucket_workspace:
+          type: string
+          description: Default workspace slug.
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-agent@sha256:d842b5d24ba54650e15cacf3483cf5dc93d1463420362a1129374340add0e38e
+    outbound_hosts:
+    - api.bitbucket.org:443
+  mcp:
+    server: bitbucket
+    transport: stdio
+    tools:
+    - id: bitbucket.list_repos
+      description: List repositories in a workspace.
+    - id: bitbucket.list_pull_requests
+      description: List pull requests in a repository (state OPEN, MERGED or DECLINED).
+    - id: bitbucket.get_pull_request
+      description: Get the full pull request by id.
+    - id: bitbucket.add_pr_comment
+      description: ACTION - comment on a pull request. Request user approval first.
+      risk_level: MEDIUM

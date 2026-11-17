@@ -1,0 +1,72 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: github
+  name: GitHub
+  version: 1.0.0
+  description: |-
+    GitHub from the chat: repositories, issues, pull requests and code search. An agent calls
+    github.list_issues, github.get_pull_request or github.search_code to check the state of a repository without
+    leaving the conversation.
+
+    Needs a GitHub personal access token (classic or fine-grained, scope repo / read:org as required). It is stored
+    encrypted in the extension's own space, separate from the user's vault.
+
+    Writing a comment (create_issue_comment) goes through the approval flow: the agent asks the user first.
+  icon: git-branch
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - software-development
+  - git
+  - integration
+spec:
+  type: passive
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  credentials:
+    type: token
+    scopes:
+    - personal
+    - agent
+  config:
+    schema:
+      type: object
+      required:
+      - github_token
+      properties:
+        github_token:
+          type: string
+          x-b2ai-secret: true
+          description: GitHub personal access token (classic or fine-grained).
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-agent@sha256:d842b5d24ba54650e15cacf3483cf5dc93d1463420362a1129374340add0e38e
+    outbound_hosts:
+    - api.github.com:443
+  mcp:
+    server: github
+    transport: stdio
+    tools:
+    - id: github.list_repos
+      description: List repositories of a user or organisation (or the token's own).
+    - id: github.get_repo
+      description: Get repository details (owner/name).
+    - id: github.list_issues
+      description: List issues in a repository (state open, closed or all).
+    - id: github.get_issue
+      description: Get the full issue, including its body, by number.
+    - id: github.list_pull_requests
+      description: List pull requests in a repository (state open, closed or all).
+    - id: github.get_pull_request
+      description: Get the full pull request by number (body, branches, diffstat).
+    - id: github.search_issues
+      description: Search issues and pull requests with GitHub search syntax.
+    - id: github.search_code
+      description: Search code across repositories with GitHub search syntax.
+    - id: github.get_file
+      description: Get the decoded text of a file at a path (optional ref).
+    - id: github.create_issue_comment
+      description: ACTION - post a comment on an issue or pull request. Request user approval first.
+      risk_level: MEDIUM

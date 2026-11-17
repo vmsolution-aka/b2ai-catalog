@@ -1,0 +1,65 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: confluence
+  name: Confluence
+  version: 1.0.0
+  description: |-
+    Confluence Cloud from the chat: search with CQL, read pages and create pages. An agent calls
+    confluence.search or confluence.get_page to reach documentation without leaving the conversation.
+
+    Needs an Atlassian API token (Basic auth, email and token), the same credentials as Jira. The token is stored
+    encrypted in the extension's own space.
+
+    Writing (create_page) goes through the approval flow.
+  icon: book-open
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - documentation
+  - atlassian
+  - integration
+spec:
+  type: passive
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  credentials:
+    type: basic
+    scopes:
+    - personal
+    - agent
+  config:
+    schema:
+      type: object
+      required:
+      - atlassian_site
+      - atlassian_email
+      - atlassian_api_token
+      properties:
+        atlassian_site:
+          type: string
+          description: Atlassian site, e.g. yourorg.atlassian.net
+        atlassian_email:
+          type: string
+          description: Atlassian account email.
+        atlassian_api_token:
+          type: string
+          x-b2ai-secret: true
+          description: Atlassian API token (id.atlassian.com, Security, API tokens).
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-agent@sha256:d842b5d24ba54650e15cacf3483cf5dc93d1463420362a1129374340add0e38e
+    outbound_hosts:
+    - '*.atlassian.net:443'
+  mcp:
+    server: confluence
+    transport: stdio
+    tools:
+    - id: confluence.search
+      description: Search content with CQL.
+    - id: confluence.get_page
+      description: Get a full page (storage-format body) by id.
+    - id: confluence.create_page
+      description: ACTION - create a page in a space. Request user approval first.
+      risk_level: MEDIUM

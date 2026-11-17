@@ -1,0 +1,68 @@
+apiVersion: b2ai.dev/v1
+kind: Extension
+metadata:
+  id: homeassistant
+  name: Home Assistant
+  version: 1.0.0
+  description: |-
+    Control entities and read state of your Home Assistant instance. Each instance runs as its own active
+    extension pod, with a model and a prompt on top of the Home Assistant REST API, and can be named per home.
+
+    Needs the instance URL and a long-lived access token (Home Assistant, Profile, Security). The pod may reach
+    only the URL you configure.
+  icon: house
+  authors:
+  - name: b2ai
+  license: Apache-2.0
+  tags:
+  - smart-home
+  - integration
+spec:
+  type: active
+  scope: personal
+  requires:
+    platform: '>=2026.11'
+  credentials:
+    type: token
+    scopes:
+    - personal
+  config:
+    schema:
+      type: object
+      required:
+      - url
+      - token
+      properties:
+        url:
+          type: string
+          description: Home Assistant REST endpoint, e.g. https://homeassistant.example:8123.
+        token:
+          type: string
+          x-b2ai-secret: true
+          description: Long-lived access token (Home Assistant, Profile, Security).
+  runtime:
+    image: ghcr.io/vmsolution-aka/b2ai-agent@sha256:d842b5d24ba54650e15cacf3483cf5dc93d1463420362a1129374340add0e38e
+    outbound_hosts:
+    - '{{config.url}}'
+  active:
+    model: claude-sonnet-5-5
+    effort: low
+    prompt: |
+      You control the Home Assistant instance assigned to you. The user asks for state changes
+      ("turn off the lights") or queries ("what is the temperature in the living room"). Resolve entity_ids
+      with list_entities / get_state, call call_service for changes, and report the result.
+
+      Be specific: ask for the entity_id when the user is generic, unless list_entities makes it obvious.
+      Report errors honestly and do not retry without consent. You control only your own instance.
+  mcp:
+    transport: stdio
+    tools:
+    - id: homeassistant.list_entities
+      description: List entities, optionally filtered by domain.
+    - id: homeassistant.get_state
+      description: Get the current state and attributes of an entity.
+    - id: homeassistant.call_service
+      description: ACTION - call a Home Assistant service (turn_on, turn_off, ...).
+      risk_level: HIGH
+    - id: homeassistant.get_history
+      description: Get the state history of an entity (hours back).
