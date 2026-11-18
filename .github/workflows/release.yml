@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  VERIFIER_IMAGE: ghcr.io/vmsolution-aka/b2ai-catalog-verifier:sha-21b9ce2@sha256:37e7b9a609853a7a10a14bb647a045244b458892b8e5a363338ac0a654d031b4
+  VERIFIER_IMAGE: ghcr.io/vmsolution-aka/b2ai-catalog-verifier:sha-c1b6281@sha256:cc940c05bdf8bfe7fc2ecec6b9e8dfcaad93176822ad730487b88a6d03780f35
 
 jobs:
   release:
