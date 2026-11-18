@@ -21,7 +21,7 @@ arrives as a pull request, passes the **verifier**, and is merged only after the
 agents/<id>/agent.yaml    kind: Agent — model, tools, extensions, capabilities (with risk)
 agents/<id>/prompt.md     the agent's instructions (plain Markdown)
 bundles/<id>/bundle.yaml  kind: Bundle — agents pinned to exact versions + reporting lines
-extensions/<id>/extension.yaml  kind: Extension — an external API, its settings and MCP tools
+extensions/<id>/extension.yaml  kind: AgentPlugin — an external API, its settings and MCP tools
 tags.yaml                 tag vocabulary
 ```
 

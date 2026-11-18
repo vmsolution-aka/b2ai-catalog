@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: browser
   name: Browser
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     A headless Chromium of the agent's own, reached through the platform and never directly. The agent opens
     pages, reads their text, takes screenshots, clicks and types. What it may visit is limited to the sites an

@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: outlook
   name: Outlook
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     Microsoft Outlook mail and calendar from the chat: list and read mail, send mail, list calendar events and
     create events. One extension runs both platform servers, outlook-mail and outlook-calendar.

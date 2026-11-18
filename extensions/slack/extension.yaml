@@ -1,9 +1,9 @@
 apiVersion: b2ai.dev/v1
-kind: Extension
+kind: AgentPlugin
 metadata:
   id: slack
   name: Slack
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     Slack from the chat: list channels, search messages and post messages. An agent calls
     slack.search_messages or slack.list_channels to find a conversation, and slack.send_message to write to a
